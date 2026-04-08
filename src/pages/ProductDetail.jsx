@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
-const API = 'http://localhost:3001/api'
-const STATIC_BASE = 'http://localhost:3001'
+const API = import.meta.env.VITE_API_URL
+const STATIC_BASE = import.meta.env.VITE_STATIC_BASE
 
 const FALLBACK_IMGS = {
   drinkware: 'https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=900&q=80&fit=crop',
