@@ -2,8 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
-const API = import.meta.env.VITE_API_URL ?? 'http://localhost:3001/api'
-const STATIC_BASE = import.meta.env.VITE_STATIC_BASE ?? 'http://localhost:3001'
+const API = import.meta.env.VITE_API_URL
+const STATIC_BASE = import.meta.env.VITE_STATIC_BASE
 
 // Curated Unsplash photos – laser/wood/craft theme
 const HERO_BG = 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=1800&q=80&fit=crop'

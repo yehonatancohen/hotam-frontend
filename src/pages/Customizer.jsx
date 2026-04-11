@@ -3,8 +3,8 @@ import { useNavigate, useParams, Link } from 'react-router-dom'
 import axios from 'axios'
 import { useCart } from '../context/CartContext'
 
-const API = import.meta.env.VITE_API_URL ?? 'http://localhost:3001/api'
-const STATIC_BASE = import.meta.env.VITE_STATIC_BASE ?? 'http://localhost:3001'
+const API = import.meta.env.VITE_API_URL
+const STATIC_BASE = import.meta.env.VITE_STATIC_BASE
 
 // ── Per-category option config ──────────────────────────────────────────────
 const CATEGORY_CONFIG = {
