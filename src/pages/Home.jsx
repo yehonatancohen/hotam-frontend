@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 
-const API = 'http://localhost:3001/api'
+const API = import.meta.env.VITE_API_URL ?? 'http://localhost:3001/api'
+const STATIC_BASE = import.meta.env.VITE_STATIC_BASE ?? 'http://localhost:3001'
 
 // Curated Unsplash photos – laser/wood/craft theme
 const HERO_BG = 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=1800&q=80&fit=crop'
@@ -321,7 +322,7 @@ export default function Home() {
 
 function ProductCard({ product, className = '', large, wide }) {
   const src = (product.image_url
-    ? (product.image_url.startsWith('/') ? `http://localhost:3001${product.image_url}` : product.image_url)
+    ? (product.image_url.startsWith('/') ? `${STATIC_BASE}${product.image_url}` : product.image_url)
     : PRODUCT_IMGS[product.category] || PRODUCT_IMGS.mixed)
 
   if (wide) {
