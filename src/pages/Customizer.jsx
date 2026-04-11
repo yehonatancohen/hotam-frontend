@@ -105,9 +105,25 @@ const FONT_DEFS = {
   handwriting: { label: 'כתב יד',   style: { fontFamily: 'cursive', fontStyle: 'italic', fontWeight: 700 } },
 }
 
+function resolveUrl(url) {
+  if (!url) return null
+  return url.startsWith('/') ? STATIC_BASE + url : url
+}
+
 function imgSrc(product) {
-  if (!product?.image_url) return null
-  return product.image_url.startsWith('/') ? STATIC_BASE + product.image_url : product.image_url
+  return resolveUrl(product?.image_url)
+}
+
+// Returns { url, zone } where zone = { x, y, width, height } in percent, or null
+function getPreviewImage(product) {
+  const preview = product?.images?.find(img => img.is_preview)
+  if (preview) {
+    return {
+      url: resolveUrl(preview.url),
+      zone: { x: preview.design_x, y: preview.design_y, width: preview.design_width, height: preview.design_height }
+    }
+  }
+  return { url: imgSrc(product), zone: null }
 }
 
 // ── Main component ────────────────────────────────────────────────────────────
@@ -164,7 +180,7 @@ export default function Customizer() {
   const basePrice = product.price
   const unitPrice = basePrice + (size?.extra || 0)
   const subtotal = unitPrice * quantity
-  const grandTotal = subtotal * 1.17
+  const grandTotal = subtotal
 
   const handleOrder = () => {
     if (!engravingText.trim()) return
@@ -180,7 +196,7 @@ export default function Customizer() {
     navigate('/checkout')
   }
 
-  const productImg = imgSrc(product)
+  const { url: productImg, zone: designZone } = getPreviewImage(product)
   const previewText = engravingText || cfg.hint
 
   return (
@@ -225,17 +241,22 @@ export default function Customizer() {
                     className="absolute inset-0"
                     style={{ background: material.bg + '33', mixBlendMode: 'color' }}
                   />
-                  {/* Engraving text overlay on product */}
-                  <div className="absolute inset-0 flex items-center justify-center p-8 pointer-events-none">
+                  {/* Engraving text overlay — respects admin-set design zone */}
+                  <div
+                    className="absolute pointer-events-none flex items-center justify-center"
+                    style={designZone ? {
+                      left: `${designZone.x}%`,
+                      top: `${designZone.y}%`,
+                      width: `${designZone.width}%`,
+                      height: `${designZone.height}%`,
+                    } : { inset: 0, padding: '2rem' }}
+                  >
                     <div
-                      className="text-center px-6 py-3 rounded"
-                      style={{
-                        mixBlendMode: material.blendMode,
-                        filter: 'contrast(1.2)',
-                      }}
+                      className="text-center"
+                      style={{ mixBlendMode: material.blendMode, filter: 'contrast(1.2)' }}
                     >
                       <span
-                        className="block leading-tight text-4xl md:text-6xl break-words max-w-xs md:max-w-md"
+                        className="block leading-tight text-4xl md:text-6xl break-words max-w-full"
                         style={{ ...font.style, color: material.textColor }}
                       >
                         {previewText}
@@ -314,6 +335,44 @@ export default function Customizer() {
 
           {/* ── Controls panel ── */}
           <div className="lg:col-span-4 space-y-6 bg-surface-container-low p-7 rounded-xl border border-outline-variant/10">
+
+            {/* Mini live preview */}
+            <div className="relative rounded-xl overflow-hidden border border-outline-variant/15 shadow-inner" style={{ aspectRatio: '4/3' }}>
+              {productImg ? (
+                <>
+                  <img src={productImg} alt={product.name_he} className="absolute inset-0 w-full h-full object-cover" style={{ filter: 'brightness(0.85) contrast(1.05)' }} />
+                  <div className="absolute inset-0" style={{ background: material.bg + '33', mixBlendMode: 'color' }} />
+                  <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
+                    <span
+                      className="block text-center leading-tight text-xl break-words max-w-full"
+                      style={{ ...font.style, color: material.textColor, mixBlendMode: material.blendMode, filter: 'contrast(1.2)' }}
+                    >
+                      {previewText}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="absolute inset-0" style={{ background: material.bg }} />
+                  <div className="absolute inset-0 bg-gradient-to-tr from-black/50 via-transparent to-transparent" />
+                  <div className="absolute inset-0 flex items-center justify-center p-4">
+                    <span
+                      className="block text-center leading-tight text-xl break-words max-w-full"
+                      style={{ ...font.style, color: material.textColor }}
+                    >
+                      {previewText}
+                    </span>
+                  </div>
+                </>
+              )}
+              <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5 bg-black/30 backdrop-blur-md px-2.5 py-1 rounded-full border border-white/20">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-fixed-dim opacity-75" />
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-primary-fixed-dim" />
+                </span>
+                <span className="text-[9px] font-bold tracking-widest text-white uppercase">תצוגה חיה</span>
+              </div>
+            </div>
 
             {/* Product locked indicator */}
             <div className="flex items-center gap-3 p-3 bg-primary/5 rounded-lg border border-primary/15">
@@ -409,7 +468,7 @@ export default function Customizer() {
                 <span className="text-on-surface-variant text-sm">סה&quot;כ</span>
                 <div className="text-right">
                   <span className="block text-3xl font-headline font-black text-primary">₪{grandTotal.toFixed(0)}</span>
-                  <span className="text-xs text-on-surface-variant">כולל מע&quot;מ</span>
+                  <span className="text-xs text-on-surface-variant">מחיר סופי</span>
                 </div>
               </div>
               <button

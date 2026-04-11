@@ -148,11 +148,11 @@ export default function ProductDetail() {
                 </div>
               </div>
               <button
-                onClick={() => navigate(`/customizer/${product.id}`)}
+                onClick={() => navigate('/coming-soon')}
                 className="btn-primary w-full py-4 text-xl flex items-center justify-center gap-3"
               >
-                <span className="material-symbols-outlined">edit</span>
-                התחל לעצב עכשיו
+                <span className="material-symbols-outlined">notifications_active</span>
+                הודיעו לי כשחוזר למלאי
               </button>
             </div>
 

@@ -67,7 +67,7 @@ export default function Navbar() {
         >
           <img
             src="/logo.png"
-            alt="חתם - סטודיו לייזר"
+            alt="חותם - סטודיו לייזר"
             className="h-9 w-auto object-contain group-hover:opacity-80 transition-opacity"
           />
         </Link>

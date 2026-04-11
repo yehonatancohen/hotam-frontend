@@ -8,6 +8,7 @@ import ProductDetail from './pages/ProductDetail'
 import Customizer from './pages/Customizer'
 import Checkout from './pages/Checkout'
 import OrderConfirmation from './pages/OrderConfirmation'
+import ComingSoon from './pages/ComingSoon'
 import { CartProvider } from './context/CartContext'
 
 function AnnouncementBar() {
@@ -15,7 +16,7 @@ function AnnouncementBar() {
   if (dismissed) return null
   return (
     <div className="bg-inverse-surface text-inverse-on-surface text-sm py-2 px-4 flex items-center justify-center gap-3 relative" dir="rtl">
-      <span>🎁 משלוח חינם על הזמנות מעל 199₪ &nbsp;|&nbsp; זמן אספקה: 2–4 ימי עסקים</span>
+      <span>המוצרים שלנו בקרוב! הירשמו לרשימת ההמתנה וקבלו עדכון ראשונים</span>
       <button
         onClick={() => setDismissed(true)}
         className="absolute left-3 top-1/2 -translate-y-1/2 text-inverse-on-surface/60 hover:text-inverse-on-surface transition-colors p-1"
@@ -39,9 +40,10 @@ export default function App() {
               <Route path="/" element={<Home />} />
               <Route path="/products" element={<Products />} />
               <Route path="/products/:productId" element={<ProductDetail />} />
-              <Route path="/customizer/:productId" element={<Customizer />} />
-              <Route path="/checkout" element={<Checkout />} />
+              <Route path="/customizer/:productId" element={<ComingSoon />} />
+              <Route path="/checkout" element={<ComingSoon />} />
               <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
+              <Route path="/coming-soon" element={<ComingSoon />} />
             </Routes>
           </main>
           <Footer />

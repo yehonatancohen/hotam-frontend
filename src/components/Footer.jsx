@@ -7,7 +7,7 @@ export default function Footer() {
         <div className="flex flex-col md:flex-row-reverse justify-between items-center gap-8">
           {/* Logo */}
           <div className="flex items-center">
-            <img src="/logo.png" alt="חתם - סטודיו לייזר" className="h-10 w-auto object-contain brightness-0 invert opacity-90" />
+            <img src="/logo.png" alt="חותם - סטודיו לייזר" className="h-10 w-auto object-contain brightness-0 invert opacity-90" />
           </div>
 
           {/* Links */}
@@ -21,7 +21,7 @@ export default function Footer() {
 
           {/* Copyright */}
           <div className="text-white/40 font-body text-xs">
-            כל הזכויות שמורות © 2024 חתם - סטודיו לייזר
+            כל הזכויות שמורות © 2024 חותם - סטודיו לייזר
           </div>
         </div>
 
@@ -41,7 +41,7 @@ export default function Footer() {
               משלוח חינם מ-₪300
             </span>
           </div>
-          <div>עיצוב ופיתוח: חתם לייזר סטודיו</div>
+          <div>עיצוב ופיתוח: חותם לייזר סטודיו</div>
         </div>
       </div>
     </footer>

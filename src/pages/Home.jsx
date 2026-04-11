@@ -22,9 +22,6 @@ const PRODUCT_IMGS = {
 }
 const ABOUT_IMG = 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=900&q=80&fit=crop'
 
-// WhatsApp number – replace with real number
-const WA_NUMBER = '972500000000'
-
 const REVIEWS = [
   {
     name: 'מיכל ל.',
@@ -80,14 +77,25 @@ export default function Home() {
     <div>
       {/* ── Hero ── */}
       <section className="relative min-h-[95vh] flex items-center overflow-hidden bg-[#080c10]">
-        {/* Background photo */}
-        <div className="absolute inset-0 z-0">
-          <img src={HERO_BG} alt="לייזר בפעולה" className="w-full h-full object-cover opacity-40" />
-          <div className="absolute inset-0 bg-gradient-to-l from-black/85 via-black/50 to-black/20" />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-        </div>
-        <div className="absolute inset-0 z-0 opacity-[0.04]"
+        {/* Background — gradient + laser-glow */}
+        <div className="absolute inset-0 z-0" style={{
+          background: [
+            'radial-gradient(ellipse 85% 75% at 72% 48%, rgba(0,94,151,0.38) 0%, transparent 62%)',
+            'radial-gradient(ellipse 55% 70% at 12% 85%, rgba(0,25,60,0.45) 0%, transparent 55%)',
+            'radial-gradient(ellipse 35% 40% at 88% 15%, rgba(0,60,110,0.2) 0%, transparent 60%)',
+            'linear-gradient(148deg, #05090e 0%, #0b1520 50%, #060b13 100%)',
+          ].join(', ')
+        }} />
+        {/* Laser beam sweep */}
+        <div className="absolute inset-0 z-0 pointer-events-none" style={{
+          background: 'linear-gradient(108deg, transparent 28%, rgba(0,150,255,0.03) 46%, rgba(0,120,210,0.09) 50%, rgba(0,150,255,0.03) 54%, transparent 72%)'
+        }} />
+        {/* Subtle grid */}
+        <div className="absolute inset-0 z-0 opacity-[0.035]"
           style={{ backgroundImage: 'linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)', backgroundSize: '60px 60px' }} />
+        {/* Horizon glow */}
+        <div className="absolute inset-x-0 top-1/2 z-0 -translate-y-1/2 h-px pointer-events-none"
+          style={{ boxShadow: '0 0 120px 60px rgba(0,110,180,0.12)' }} />
 
         <div className="container mx-auto px-6 md:px-8 relative z-10">
           <div className="max-w-4xl text-right mr-auto">
@@ -101,8 +109,8 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row-reverse gap-4 mb-6">
-              <Link to="/products" className="btn-primary px-10 py-4 text-lg text-center">
-                הזמן עכשיו
+              <Link to="/coming-soon" className="btn-primary px-10 py-4 text-lg text-center">
+                הודיעו לי כשיחזור
               </Link>
               <a
                 href="#products"
@@ -174,7 +182,7 @@ export default function Home() {
             <div className="hidden md:block absolute top-10 right-[16.67%] left-[16.67%] h-px bg-outline-variant/40" />
 
             {[
-              { emoji: '📤', step: '01', title: 'שולחים עיצוב', text: 'תמונה, לוגו או טקסט — בווטסאפ או מייל. אנחנו מטפלים בכל השאר.' },
+              { emoji: '📤', step: '01', title: 'שולחים עיצוב', text: 'תמונה, לוגו או טקסט — דרך האתר שלנו. אנחנו מטפלים בכל השאר.' },
               { emoji: '✅', step: '02', title: 'מקבלים הצעה', text: 'תוך שעה, עם אישור מחיר ומועד אספקה. ללא הפתעות.' },
               { emoji: '📦', step: '03', title: 'מקבלים הביתה', text: 'משלוח לכל הארץ תוך 2–4 ימי עסקים, עם מעקב בזמן אמת.' },
             ].map((s, i) => (
@@ -190,15 +198,10 @@ export default function Home() {
           </div>
 
           <div className="text-center mt-12">
-            <a
-              href={`https://wa.me/${WA_NUMBER}?text=שלום, אני מעוניין בהזמנת חריטת לייזר`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-3 bg-[#25d366] text-white font-headline font-bold px-8 py-4 rounded-lg hover:bg-[#1ebe5d] active:scale-95 transition-all shadow-lg"
-            >
-              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-              התחל בווטסאפ עכשיו
-            </a>
+            <Link to="/coming-soon" className="btn-primary inline-flex items-center gap-2 px-8 py-4 text-lg">
+              <span className="material-symbols-outlined">notifications_active</span>
+              הודיעו לי כשמתחילים
+            </Link>
           </div>
         </div>
       </section>
@@ -272,7 +275,7 @@ export default function Home() {
               הטכנולוגיה<br />שמאחורי הרגש.
             </h2>
             <p className="text-white/70 text-lg leading-relaxed mb-10 font-light">
-              חתם נוסד מתוך אמונה שטכנולוגיה וחומרים טבעיים יכולים לחיות יחד בהרמוניה מושלמת. כל פריט שאנחנו מייצרים הוא שילוב בין דיוק מיקרוסקופי לבין חמימות אורגנית.
+              חותם נוסד מתוך אמונה שטכנולוגיה וחומרים טבעיים יכולים לחיות יחד בהרמוניה מושלמת. כל פריט שאנחנו מייצרים הוא שילוב בין דיוק מיקרוסקופי לבין חמימות אורגנית.
             </p>
             <ul className="space-y-8">
               {[
@@ -332,15 +335,13 @@ export default function Home() {
             צרו איתנו קשר ונחזור אליכם תוך שעה
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href={`https://wa.me/${WA_NUMBER}?text=שלום, אני מעוניין בהזמנת חריטת לייזר`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-3 px-10 py-4 text-lg bg-[#25d366] text-white font-headline font-bold rounded-lg shadow-xl hover:bg-[#1ebe5d] active:scale-95 transition-all"
+            <Link
+              to="/coming-soon"
+              className="inline-flex items-center justify-center gap-3 px-10 py-4 text-lg btn-primary"
             >
-              <svg viewBox="0 0 24 24" className="w-5 h-5 fill-current shrink-0"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-              שלחו הודעה בווטסאפ
-            </a>
+              <span className="material-symbols-outlined">notifications_active</span>
+              הרשמה לרשימת ההמתנה
+            </Link>
             <Link
               to="/products"
               className="inline-flex items-center justify-center gap-3 px-10 py-4 text-lg bg-white/10 border border-white/20 text-white font-headline font-bold rounded-lg hover:bg-white/15 active:scale-95 transition-all"
@@ -401,10 +402,10 @@ export default function Home() {
         style={{ boxShadow: '0 -4px 24px rgba(0,0,0,0.15)' }}
       >
         <Link
-          to="/products"
+          to="/coming-soon"
           className="btn-primary w-full py-4 text-lg flex items-center justify-center gap-2 rounded-none"
         >
-          הזמן עכשיו עם חריטה אישית
+          הודיעו לי כשחוזרים למלאי
           <span className="material-symbols-outlined">arrow_back</span>
         </Link>
       </div>
