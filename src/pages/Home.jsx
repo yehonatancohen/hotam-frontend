@@ -76,64 +76,117 @@ export default function Home() {
   return (
     <div>
       {/* ── Hero ── */}
-      <section className="relative min-h-[95vh] flex items-center overflow-hidden bg-[#080c10]">
-        {/* Background — gradient + laser-glow */}
+      <section className="relative min-h-[95vh] flex items-center overflow-hidden bg-[#060a0f]">
+        {/* Background */}
         <div className="absolute inset-0 z-0" style={{
           background: [
-            'radial-gradient(ellipse 85% 75% at 72% 48%, rgba(0,94,151,0.38) 0%, transparent 62%)',
-            'radial-gradient(ellipse 55% 70% at 12% 85%, rgba(0,25,60,0.45) 0%, transparent 55%)',
-            'radial-gradient(ellipse 35% 40% at 88% 15%, rgba(0,60,110,0.2) 0%, transparent 60%)',
-            'linear-gradient(148deg, #05090e 0%, #0b1520 50%, #060b13 100%)',
+            'radial-gradient(ellipse 70% 80% at 80% 50%, rgba(0,94,151,0.28) 0%, transparent 65%)',
+            'radial-gradient(ellipse 50% 60% at 10% 80%, rgba(0,20,50,0.5) 0%, transparent 55%)',
+            'linear-gradient(150deg, #04080d 0%, #091320 55%, #04090e 100%)',
           ].join(', ')
         }} />
-        {/* Laser beam sweep */}
-        <div className="absolute inset-0 z-0 pointer-events-none" style={{
-          background: 'linear-gradient(108deg, transparent 28%, rgba(0,150,255,0.03) 46%, rgba(0,120,210,0.09) 50%, rgba(0,150,255,0.03) 54%, transparent 72%)'
-        }} />
-        {/* Subtle grid */}
-        <div className="absolute inset-0 z-0 opacity-[0.035]"
-          style={{ backgroundImage: 'linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)', backgroundSize: '60px 60px' }} />
-        {/* Horizon glow */}
-        <div className="absolute inset-x-0 top-1/2 z-0 -translate-y-1/2 h-px pointer-events-none"
-          style={{ boxShadow: '0 0 120px 60px rgba(0,110,180,0.12)' }} />
+        <div className="absolute inset-0 z-0 opacity-[0.025]"
+          style={{ backgroundImage: 'linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)', backgroundSize: '48px 48px' }} />
 
-        <div className="container mx-auto px-6 md:px-8 relative z-10">
-          <div className="max-w-4xl text-right mr-auto">
-            <h1 className="font-headline font-black text-4xl md:text-7xl text-white mb-6 leading-[1.1] hero-text-shadow">
-              חריטת לייזר אישית על כל מוצר —<br />
-              <span className="text-primary-fixed-dim">מוכן תוך 48 שעות</span>
-            </h1>
+        <div className="container mx-auto px-6 md:px-8 relative z-10 py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
 
-            <p className="font-body text-lg md:text-2xl text-white/80 mb-10 max-w-2xl leading-relaxed font-light">
-              מתנות עסקיות, תכשיטים, ציוד — עם שם, לוגו או עיצוב אישי
-            </p>
+            {/* Text — right side for RTL */}
+            <div className="text-right order-2 lg:order-1">
+              {/* Label */}
+              <div className="inline-flex items-center gap-2.5 bg-primary/15 border border-primary/25 rounded-full px-4 py-2 text-primary-fixed-dim text-sm font-semibold mb-8">
+                <span className="w-1.5 h-1.5 rounded-full bg-primary-fixed-dim animate-pulse-dot shrink-0" />
+                סטודיו לחריטת לייזר — ישראל
+              </div>
 
-            <div className="flex flex-col sm:flex-row-reverse gap-4 mb-6">
-              <Link to="/coming-soon" className="btn-primary px-10 py-4 text-lg text-center">
-                הודיעו לי כשיחזור
-              </Link>
-              <a
-                href="#products"
-                onClick={e => { e.preventDefault(); document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' }) }}
-                className="btn-ghost px-10 py-4 text-lg cursor-pointer text-center"
-              >
-                ראה דוגמאות
-              </a>
+              <h1 className="font-headline font-black text-5xl md:text-6xl xl:text-7xl text-white mb-6 leading-[1.05] hero-text-shadow">
+                מתנות שלא<br />
+                <span className="text-primary-fixed-dim">נשכחות לעולם</span>
+              </h1>
+
+              <p className="font-body text-white/65 text-lg md:text-xl mb-10 max-w-lg leading-relaxed font-light">
+                חריטה אישית על עץ, עור ומתכת — שם, לוגו, או עיצוב שלך. כל פריט נוצר ביד ומוכן תוך 48 שעות.
+              </p>
+
+              <div className="flex flex-col sm:flex-row-reverse gap-4 mb-10">
+                <Link to="/products" className="btn-primary px-10 py-4 text-lg text-center">
+                  עיצוב המוצר שלי
+                </Link>
+                <a
+                  href="#products"
+                  onClick={e => { e.preventDefault(); document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' }) }}
+                  className="btn-ghost px-10 py-4 text-lg cursor-pointer text-center"
+                >
+                  ראה דוגמאות
+                </a>
+              </div>
+
+              {/* Stats */}
+              <div className="flex flex-row-reverse gap-8 text-right">
+                {[
+                  { num: '500+', label: 'לקוחות מרוצים' },
+                  { num: '48h', label: 'זמן אספקה' },
+                  { num: '1200', label: 'DPI רזולוציה' },
+                ].map(s => (
+                  <div key={s.num}>
+                    <div className="font-headline font-black text-2xl md:text-3xl text-white leading-none">{s.num}</div>
+                    <div className="text-white/40 text-xs mt-1">{s.label}</div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            {/* Urgency badge */}
-            <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full px-5 py-2.5 text-white text-sm font-semibold">
-              <span className="text-yellow-300">🚚</span>
-              משלוח חינם להזמנות השבוע
+            {/* Visual — product showcase */}
+            <div className="order-1 lg:order-2 relative flex items-center justify-center">
+              <div className="relative w-full max-w-md mx-auto">
+                {/* Main image */}
+                <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-white/10 aspect-square">
+                  <img
+                    src="https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800&q=85&fit=crop"
+                    alt="חריטת לייזר על עור"
+                    className="w-full h-full object-cover"
+                    style={{ filter: 'brightness(0.9) contrast(1.05)' }}
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
+                  {/* Live laser chip */}
+                  <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20">
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-fixed-dim opacity-75" />
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-fixed-dim" />
+                    </span>
+                    <span className="text-[10px] font-bold tracking-widest text-white uppercase">Live Engraving</span>
+                  </div>
+                </div>
+
+                {/* Floating card — DPI */}
+                <div className="absolute -bottom-5 -right-5 bg-surface-container-lowest/95 backdrop-blur-md rounded-2xl p-4 shadow-2xl border border-outline-variant/20">
+                  <div className="font-headline font-black text-3xl text-primary leading-none">1200<span className="text-base font-body font-normal text-on-surface-variant"> DPI</span></div>
+                  <div className="text-xs text-on-surface-variant mt-0.5">רזולוציית חריטה</div>
+                </div>
+
+                {/* Floating card — delivery */}
+                <div className="absolute -top-5 -left-5 bg-surface-container-lowest/95 backdrop-blur-md rounded-2xl p-4 shadow-2xl border border-outline-variant/20">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>local_shipping</span>
+                    <div>
+                      <div className="font-headline font-bold text-on-surface text-sm leading-none">משלוח חינם</div>
+                      <div className="text-xs text-on-surface-variant mt-0.5">48 שעות</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Second small image */}
+                <div className="absolute -bottom-8 left-12 w-24 h-24 rounded-2xl overflow-hidden border-2 border-surface-container-lowest shadow-xl">
+                  <img src="https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=300&q=80&fit=crop" alt="" className="w-full h-full object-cover" />
+                </div>
+              </div>
             </div>
+
           </div>
         </div>
 
-        <div className="absolute left-0 top-0 h-full w-16 xl:w-20 border-r border-white/5 hidden xl:flex flex-col justify-center items-center gap-12 text-white/20">
-          <span className="text-xs tracking-[1em] uppercase" style={{ writingMode: 'vertical-rl' }}>Est. 2024</span>
-          <span className="text-xs tracking-[1em] uppercase" style={{ writingMode: 'vertical-rl' }}>High Definition Craft</span>
-        </div>
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/30">
+        {/* Scroll indicator */}
+        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/20">
           <div className="w-px h-10 bg-gradient-to-b from-white/30 to-transparent animate-float" />
         </div>
       </section>
@@ -198,9 +251,9 @@ export default function Home() {
           </div>
 
           <div className="text-center mt-12">
-            <Link to="/coming-soon" className="btn-primary inline-flex items-center gap-2 px-8 py-4 text-lg">
-              <span className="material-symbols-outlined">notifications_active</span>
-              הודיעו לי כשמתחילים
+            <Link to="/products" className="btn-primary inline-flex items-center gap-2 px-8 py-4 text-lg">
+              בחר מוצר עכשיו
+              <span className="material-symbols-outlined">arrow_back</span>
             </Link>
           </div>
         </div>
@@ -336,11 +389,11 @@ export default function Home() {
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
-              to="/coming-soon"
+              to="/products"
               className="inline-flex items-center justify-center gap-3 px-10 py-4 text-lg btn-primary"
             >
-              <span className="material-symbols-outlined">notifications_active</span>
-              הרשמה לרשימת ההמתנה
+              עיצוב המוצר שלי
+              <span className="material-symbols-outlined">arrow_back</span>
             </Link>
             <Link
               to="/products"
@@ -402,10 +455,10 @@ export default function Home() {
         style={{ boxShadow: '0 -4px 24px rgba(0,0,0,0.15)' }}
       >
         <Link
-          to="/coming-soon"
+          to="/products"
           className="btn-primary w-full py-4 text-lg flex items-center justify-center gap-2 rounded-none"
         >
-          הודיעו לי כשחוזרים למלאי
+          עיצוב המוצר שלי
           <span className="material-symbols-outlined">arrow_back</span>
         </Link>
       </div>

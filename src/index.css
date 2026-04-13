@@ -67,11 +67,11 @@
   }
 
   .btn-primary {
-    @apply bg-primary text-on-primary font-headline font-bold rounded-lg transition-all duration-200 shadow-glow hover:bg-primary-container active:scale-95;
+    @apply bg-primary text-on-primary font-headline font-bold rounded-2xl transition-all duration-200 shadow-glow hover:bg-primary-container active:scale-95;
   }
 
   .btn-ghost {
-    @apply bg-white/5 backdrop-blur-md border border-white/20 text-white font-headline font-bold rounded-lg transition-all duration-200 hover:bg-white/10 active:scale-95;
+    @apply bg-white/5 backdrop-blur-md border border-white/20 text-white font-headline font-bold rounded-2xl transition-all duration-200 hover:bg-white/10 active:scale-95;
   }
 
   .input-field {

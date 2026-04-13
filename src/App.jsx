@@ -1,5 +1,5 @@
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
-import { useState } from 'react'
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom'
+import { useState, useEffect } from 'react'
 import Navbar from './components/Navbar'
 import Footer from './components/Footer'
 import Home from './pages/Home'
@@ -10,6 +10,16 @@ import Checkout from './pages/Checkout'
 import OrderConfirmation from './pages/OrderConfirmation'
 import ComingSoon from './pages/ComingSoon'
 import { CartProvider } from './context/CartContext'
+
+function TwemojiParser() {
+  const location = useLocation()
+  useEffect(() => {
+    if (window.twemoji) {
+      window.twemoji.parse(document.body, { folder: 'svg', ext: '.svg' })
+    }
+  }, [location.pathname])
+  return null
+}
 
 function AnnouncementBar() {
   const [dismissed, setDismissed] = useState(false)
@@ -33,6 +43,7 @@ export default function App() {
     <BrowserRouter>
       <CartProvider>
         <div className="flex flex-col min-h-screen">
+          <TwemojiParser />
           <AnnouncementBar />
           <Navbar />
           <main className="flex-1">
@@ -40,7 +51,7 @@ export default function App() {
               <Route path="/" element={<Home />} />
               <Route path="/products" element={<Products />} />
               <Route path="/products/:productId" element={<ProductDetail />} />
-              <Route path="/customizer/:productId" element={<ComingSoon />} />
+              <Route path="/customizer/:productId" element={<Customizer />} />
               <Route path="/checkout" element={<ComingSoon />} />
               <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
               <Route path="/coming-soon" element={<ComingSoon />} />
