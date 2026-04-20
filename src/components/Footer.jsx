@@ -16,7 +16,6 @@ export default function Footer() {
             <a href="#" className="opacity-70 hover:opacity-100 hover:-translate-y-0.5 transition-all">פייסבוק</a>
             <a href="#" className="opacity-70 hover:opacity-100 hover:-translate-y-0.5 transition-all">תנאי שימוש</a>
             <a href="#" className="opacity-70 hover:opacity-100 hover:-translate-y-0.5 transition-all">מדיניות פרטיות</a>
-            <Link to="/customizer" className="opacity-70 hover:opacity-100 hover:-translate-y-0.5 transition-all">התאמה אישית</Link>
           </div>
 
           {/* Copyright */}

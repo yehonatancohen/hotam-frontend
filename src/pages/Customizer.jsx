@@ -114,17 +114,34 @@ function imgSrc(product) {
   return resolveUrl(product?.image_url)
 }
 
-// Returns { url, zone } where zone = { x, y, width, height } in percent, or null
+// Returns { url, zone } where zone = { x, y, width, height, rotation } in percent, or null
 function getPreviewImage(product) {
   const preview = product?.images?.find(img => img.is_preview)
   if (preview) {
     return {
       url: resolveUrl(preview.url),
-      zone: { x: preview.design_x, y: preview.design_y, width: preview.design_width, height: preview.design_height }
+      zone: {
+        x: preview.design_x, y: preview.design_y,
+        width: preview.design_width, height: preview.design_height,
+        rotation: preview.design_rotation
+      }
     }
   }
   return { url: imgSrc(product), zone: null }
 }
+
+const ALIGNMENTS = [
+  { id: 'left',   label: 'שמאל', icon: 'format_align_left' },
+  { id: 'center', label: 'מרכז', icon: 'format_align_center' },
+  { id: 'right',  label: 'ימין', icon: 'format_align_right' },
+]
+
+const FONT_SIZES = [
+  { id: 'sm', label: 'קטן',   scale: 0.7 },
+  { id: 'md', label: 'בינוני', scale: 1.0 },
+  { id: 'lg', label: 'גדול',   scale: 1.3 },
+  { id: 'xl', label: 'ענק',    scale: 1.7 },
+]
 
 // ── Main component ────────────────────────────────────────────────────────────
 export default function Customizer() {
@@ -142,6 +159,16 @@ export default function Customizer() {
   const [selectedSize, setSelectedSize] = useState(null)
   const [quantity, setQuantity] = useState(1)
 
+  // Advanced engraving options
+  const [alignment, setAlignment] = useState('center')
+  const [fontSize, setFontSize] = useState('md')
+  const [letterSpacing, setLetterSpacing] = useState('normal') // normal, wide, extra
+  const [isBold, setIsBold] = useState(false)
+
+  // Derived options from product/category
+  const [materials, setMaterials] = useState([])
+  const [sizes, setSizes] = useState([])
+
   // Load the single product
   useEffect(() => {
     if (!productId) { navigate('/products'); return }
@@ -150,8 +177,26 @@ export default function Customizer() {
         const p = r.data.data
         setProduct(p)
         const cfg = CATEGORY_CONFIG[p.category] || CATEGORY_CONFIG.mixed
-        setSelectedMaterial(cfg.materials[0].id)
-        setSelectedSize(cfg.sizes[0].id)
+
+        // Determine materials
+        let finalMaterials = cfg.materials
+        if (p.available_materials) {
+          const avail = p.available_materials.split(',').map(s => s.trim().toLowerCase())
+          const matched = cfg.materials.filter(m => avail.includes(m.id.toLowerCase()) || avail.includes(m.label.toLowerCase()))
+          if (matched.length > 0) finalMaterials = matched
+        }
+        setMaterials(finalMaterials)
+        setSelectedMaterial(finalMaterials[0].id)
+
+        // Determine sizes
+        let finalSizes = cfg.sizes
+        if (p.available_sizes) {
+          const avail = p.available_sizes.split(',').map(s => s.trim())
+          finalSizes = avail.map((s, i) => ({ id: `size_${i}`, label: s, extra: 0 }))
+        }
+        setSizes(finalSizes)
+        setSelectedSize(finalSizes[0].id)
+
         setEngravingText(cfg.hint)
       })
       .catch(() => setNotFound(true))
@@ -174,9 +219,9 @@ export default function Customizer() {
   )
 
   const cfg = CATEGORY_CONFIG[product.category] || CATEGORY_CONFIG.mixed
-  const material = cfg.materials.find(m => m.id === selectedMaterial) || cfg.materials[0]
+  const material = materials.find(m => m.id === selectedMaterial) || materials[0]
   const font = FONT_DEFS[selectedFont]
-  const size = cfg.sizes.find(s => s.id === selectedSize) || cfg.sizes[0]
+  const size = sizes.find(s => s.id === selectedSize) || sizes[0]
   const basePrice = product.price
   const unitPrice = basePrice + (size?.extra || 0)
   const subtotal = unitPrice * quantity
@@ -192,12 +237,26 @@ export default function Customizer() {
       size: selectedSize,
       quantity,
       price: subtotal,
+      alignment,
+      fontSize,
+      letterSpacing,
+      isBold
     })
     navigate('/checkout')
   }
 
   const { url: productImg, zone: designZone } = getPreviewImage(product)
   const previewText = engravingText || cfg.hint
+
+  const getLetterSpacingValue = () => {
+    if (letterSpacing === 'wide') return '0.15em'
+    if (letterSpacing === 'extra') return '0.3em'
+    return font.style.letterSpacing || 'normal'
+  }
+
+  const getFontSizeScale = () => {
+    return FONT_SIZES.find(s => s.id === fontSize)?.scale || 1.0
+  }
 
   return (
     <div>
@@ -249,15 +308,26 @@ export default function Customizer() {
                       top: `${designZone.y}%`,
                       width: `${designZone.width}%`,
                       height: `${designZone.height}%`,
+                      transform: `rotate(${designZone.rotation || 0}deg)`
                     } : { inset: 0, padding: '2rem' }}
                   >
                     <div
-                      className="text-center"
-                      style={{ mixBlendMode: material.blendMode, filter: 'contrast(1.2)' }}
+                      className="text-center w-full"
+                      style={{
+                        mixBlendMode: material.blendMode,
+                        filter: 'contrast(1.2)',
+                        textAlign: alignment
+                      }}
                     >
                       <span
-                        className="block leading-tight text-4xl md:text-6xl break-words max-w-full"
-                        style={{ ...font.style, color: material.textColor }}
+                        className="block leading-tight break-words max-w-full"
+                        style={{
+                          ...font.style,
+                          color: material.textColor,
+                          fontSize: `calc(3rem * ${getFontSizeScale()})`,
+                          letterSpacing: getLetterSpacingValue(),
+                          fontWeight: isBold ? 900 : font.style.fontWeight
+                        }}
                       >
                         {previewText}
                       </span>
@@ -269,7 +339,6 @@ export default function Customizer() {
                   />
                 </>
               ) : (
-                // Fallback: no product image, show material BG with text
                 <>
                   <div className="absolute inset-0" style={{ background: material.bg }} />
                   <div className="absolute inset-0 bg-gradient-to-tr from-black/50 via-transparent to-transparent" />
@@ -295,7 +364,7 @@ export default function Customizer() {
 
               {/* Material swatches */}
               <div className="absolute bottom-5 left-5 flex gap-2">
-                {cfg.materials.map(m => (
+                {materials.map(m => (
                   <button
                     key={m.id}
                     onClick={() => setSelectedMaterial(m.id)}
@@ -310,8 +379,8 @@ export default function Customizer() {
             </div>
 
             {/* Font selector below visualizer */}
-            {cfg.fonts.length > 1 && (
-              <div className="mt-4 flex gap-3 items-center">
+            <div className="mt-4 space-y-4">
+              <div className="flex gap-3 items-center">
                 <span className="text-xs text-on-surface-variant uppercase tracking-widest font-label">גופן:</span>
                 <div className="flex gap-2 flex-wrap">
                   {cfg.fonts.map(fid => (
@@ -330,7 +399,60 @@ export default function Customizer() {
                   ))}
                 </div>
               </div>
-            )}
+
+              {/* More options */}
+              <div className="flex flex-wrap gap-6 items-center bg-surface-container-low/50 p-3 rounded-xl border border-outline-variant/10">
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-on-surface-variant uppercase">יישור:</span>
+                  <div className="flex bg-surface-container rounded-lg p-0.5">
+                    {ALIGNMENTS.map(a => (
+                      <button
+                        key={a.id}
+                        onClick={() => setAlignment(a.id)}
+                        className={`p-1.5 rounded-md transition-all ${alignment === a.id ? 'bg-primary text-white shadow-sm' : 'text-on-surface-variant hover:text-primary'}`}
+                      >
+                        <span className="material-symbols-outlined text-sm">{a.icon}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-on-surface-variant uppercase">גודל:</span>
+                  <div className="flex bg-surface-container rounded-lg p-0.5">
+                    {FONT_SIZES.map(s => (
+                      <button
+                        key={s.id}
+                        onClick={() => setFontSize(s.id)}
+                        className={`px-2 py-1 text-[10px] font-bold rounded-md transition-all ${fontSize === s.id ? 'bg-primary text-white' : 'text-on-surface-variant hover:text-primary'}`}
+                      >
+                        {s.id.toUpperCase()}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-on-surface-variant uppercase">ריווח:</span>
+                  <select
+                    value={letterSpacing}
+                    onChange={e => setLetterSpacing(e.target.value)}
+                    className="bg-surface-container text-[10px] font-bold py-1 px-2 rounded-lg outline-none"
+                  >
+                    <option value="normal">רגיל</option>
+                    <option value="wide">רחב</option>
+                    <option value="extra">רחב מאוד</option>
+                  </select>
+                </div>
+
+                <button
+                  onClick={() => setIsBold(!isBold)}
+                  className={`p-1.5 rounded-lg border transition-all ${isBold ? 'bg-primary/10 border-primary text-primary' : 'bg-surface-container border-transparent text-on-surface-variant'}`}
+                >
+                  <span className="material-symbols-outlined text-sm font-bold">format_bold</span>
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* ── Controls panel ── */}
@@ -344,8 +466,17 @@ export default function Customizer() {
                   <div className="absolute inset-0" style={{ background: material.bg + '33', mixBlendMode: 'color' }} />
                   <div className="absolute inset-0 flex items-center justify-center p-4 pointer-events-none">
                     <span
-                      className="block text-center leading-tight text-xl break-words max-w-full"
-                      style={{ ...font.style, color: material.textColor, mixBlendMode: material.blendMode, filter: 'contrast(1.2)' }}
+                      className="block text-center leading-tight break-words max-w-full"
+                      style={{
+                        ...font.style,
+                        color: material.textColor,
+                        mixBlendMode: material.blendMode,
+                        filter: 'contrast(1.2)',
+                        textAlign: alignment,
+                        fontSize: `calc(1.2rem * ${getFontSizeScale()})`,
+                        letterSpacing: getLetterSpacingValue(),
+                        fontWeight: isBold ? 900 : font.style.fontWeight
+                      }}
                     >
                       {previewText}
                     </span>
@@ -407,7 +538,7 @@ export default function Customizer() {
             <div className="space-y-2">
               <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-widest">חומר</label>
               <div className="space-y-2">
-                {cfg.materials.map(m => (
+                {materials.map(m => (
                   <button
                     key={m.id}
                     onClick={() => setSelectedMaterial(m.id)}
@@ -428,11 +559,11 @@ export default function Customizer() {
             </div>
 
             {/* Size (only if more than one) */}
-            {cfg.sizes.length > 1 && (
+            {sizes.length > 1 && (
               <div className="space-y-2">
                 <label className="block text-xs font-bold text-on-surface-variant uppercase tracking-widest">גודל</label>
                 <div className="flex gap-2 flex-wrap">
-                  {cfg.sizes.map(s => (
+                  {sizes.map(s => (
                     <button
                       key={s.id}
                       onClick={() => setSelectedSize(s.id)}

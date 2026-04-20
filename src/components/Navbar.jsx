@@ -6,7 +6,6 @@ import { useCart } from '../context/CartContext'
 const NAV = [
   { label: 'ראשי',         href: '/',           hash: null,       matchPath: (p) => p === '/' },
   { label: 'מוצרים',       href: '/products',   hash: null,       matchPath: (p) => p.startsWith('/products') },
-  { label: 'התאמה אישית',  href: '/customizer', hash: null,       matchPath: (p) => p.startsWith('/customizer') },
   { label: 'אודות',        href: '/',           hash: 'about',    matchPath: () => false },
   { label: 'צרו קשר',      href: '/',           hash: 'contact',  matchPath: () => false },
 ]
