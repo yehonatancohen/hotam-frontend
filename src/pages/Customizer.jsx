@@ -20,7 +20,7 @@ const CATEGORY_CONFIG = {
       { id: 'medium', label: '500ml', extra: 20 },
       { id: 'large',  label: '750ml', extra: 40 },
     ],
-    maxChars: 20,
+    maxChars: 100,
     textPosition: 'center',
     hint: 'שם, תאריך, או ברכה קצרה',
   },
@@ -33,7 +33,7 @@ const CATEGORY_CONFIG = {
     sizes: [
       { id: 'standard', label: 'סטנדרט', extra: 0 },
     ],
-    maxChars: 15,
+    maxChars: 80,
     textPosition: 'center',
     hint: 'ראשי תיבות, שם, ברכה',
   },
@@ -49,7 +49,7 @@ const CATEGORY_CONFIG = {
       { id: 'medium', label: 'בינוני (40×20)', extra: 80 },
       { id: 'large',  label: 'גדול (60×30)',  extra: 180 },
     ],
-    maxChars: 40,
+    maxChars: 150,
     textPosition: 'center',
     hint: 'שם חברה, כותרת, ציטוט',
   },
@@ -64,7 +64,7 @@ const CATEGORY_CONFIG = {
       { id: 'medium', label: 'בינוני', extra: 50 },
       { id: 'large',  label: 'גדול',  extra: 100 },
     ],
-    maxChars: 25,
+    maxChars: 100,
     textPosition: 'center',
     hint: 'שם משפחה, תאריך, ציטוט',
   },
@@ -77,9 +77,9 @@ const CATEGORY_CONFIG = {
       { id: 'standard', label: 'קופסה רגילה', extra: 0 },
       { id: 'premium',  label: 'קופסה פרימיום', extra: 60 },
     ],
-    maxChars: 50,
+    maxChars: 120,
     textPosition: 'center',
-    hint: 'הקדשה אישית עד 50 תווים',
+    hint: 'הקדשה אישית עד 120 תווים',
   },
   mixed: {
     materials: [
@@ -93,7 +93,7 @@ const CATEGORY_CONFIG = {
       { id: 'medium', label: 'בינוני', extra: 30 },
       { id: 'large',  label: 'גדול',  extra: 60 },
     ],
-    maxChars: 30,
+    maxChars: 100,
     textPosition: 'center',
     hint: 'טקסט לחריטה',
   },
@@ -164,6 +164,7 @@ export default function Customizer() {
   const [fontSize, setFontSize] = useState('md')
   const [letterSpacing, setLetterSpacing] = useState('normal') // normal, wide, extra
   const [isBold, setIsBold] = useState(false)
+  const [customRotation, setCustomRotation] = useState(0)
 
   // Derived options from product/category
   const [materials, setMaterials] = useState([])
@@ -198,6 +199,10 @@ export default function Customizer() {
         setSelectedSize(finalSizes[0].id)
 
         setEngravingText(cfg.hint)
+
+        // Set initial rotation from admin config
+        const { zone } = getPreviewImage(p)
+        if (zone) setCustomRotation(zone.rotation || 0)
       })
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false))
@@ -240,7 +245,8 @@ export default function Customizer() {
       alignment,
       fontSize,
       letterSpacing,
-      isBold
+      isBold,
+      rotation: customRotation
     })
     navigate('/checkout')
   }
@@ -308,8 +314,8 @@ export default function Customizer() {
                       top: `${designZone.y}%`,
                       width: `${designZone.width}%`,
                       height: `${designZone.height}%`,
-                      transform: `rotate(${designZone.rotation || 0}deg)`
-                    } : { inset: 0, padding: '2rem' }}
+                      transform: `rotate(${customRotation}deg)`
+                    } : { inset: 0, padding: '2rem', transform: `rotate(${customRotation}deg)` }}
                   >
                     <div
                       className="text-center w-full"
@@ -345,7 +351,7 @@ export default function Customizer() {
                   <div className="absolute inset-0 flex items-center justify-center p-8">
                     <span
                       className="block leading-tight text-4xl md:text-7xl text-center break-words max-w-sm md:max-w-xl"
-                      style={{ ...font.style, color: material.textColor }}
+                      style={{ ...font.style, color: material.textColor, transform: `rotate(${customRotation}deg)` }}
                     >
                       {previewText}
                     </span>
@@ -401,7 +407,7 @@ export default function Customizer() {
               </div>
 
               {/* More options */}
-              <div className="flex flex-wrap gap-6 items-center bg-surface-container-low/50 p-3 rounded-xl border border-outline-variant/10">
+              <div className="flex flex-wrap gap-6 items-center bg-surface-container-low/50 p-4 rounded-xl border border-outline-variant/10">
                 <div className="flex items-center gap-2">
                   <span className="text-[10px] font-bold text-on-surface-variant uppercase">יישור:</span>
                   <div className="flex bg-surface-container rounded-lg p-0.5">
@@ -445,6 +451,16 @@ export default function Customizer() {
                   </select>
                 </div>
 
+                <div className="flex items-center gap-2 flex-1 min-w-[150px]">
+                  <span className="text-[10px] font-bold text-on-surface-variant uppercase">סיבוב:</span>
+                  <input
+                    type="range" min="-180" max="180" value={customRotation}
+                    onChange={e => setCustomRotation(parseInt(e.target.value))}
+                    className="flex-1 accent-primary"
+                  />
+                  <span className="text-[10px] font-mono w-8 text-on-surface-variant text-left">{customRotation}°</span>
+                </div>
+
                 <button
                   onClick={() => setIsBold(!isBold)}
                   className={`p-1.5 rounded-lg border transition-all ${isBold ? 'bg-primary/10 border-primary text-primary' : 'bg-surface-container border-transparent text-on-surface-variant'}`}
@@ -475,7 +491,8 @@ export default function Customizer() {
                         textAlign: alignment,
                         fontSize: `calc(1.2rem * ${getFontSizeScale()})`,
                         letterSpacing: getLetterSpacingValue(),
-                        fontWeight: isBold ? 900 : font.style.fontWeight
+                        fontWeight: isBold ? 900 : font.style.fontWeight,
+                        transform: `rotate(${customRotation}deg)`
                       }}
                     >
                       {previewText}
@@ -489,7 +506,7 @@ export default function Customizer() {
                   <div className="absolute inset-0 flex items-center justify-center p-4">
                     <span
                       className="block text-center leading-tight text-xl break-words max-w-full"
-                      style={{ ...font.style, color: material.textColor }}
+                      style={{ ...font.style, color: material.textColor, transform: `rotate(${customRotation}deg)` }}
                     >
                       {previewText}
                     </span>
