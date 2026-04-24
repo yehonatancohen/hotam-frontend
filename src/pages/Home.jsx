@@ -76,17 +76,15 @@ export default function Home() {
   return (
     <div>
       {/* ── Hero ── */}
-      <section className="relative min-h-[95vh] flex items-center overflow-hidden bg-[#060a0f]">
+      <section className="relative min-h-[95vh] flex items-center overflow-hidden bg-[#0a0704]">
         {/* Background */}
         <div className="absolute inset-0 z-0" style={{
           background: [
-            'radial-gradient(ellipse 70% 80% at 80% 50%, rgba(0,94,151,0.28) 0%, transparent 65%)',
-            'radial-gradient(ellipse 50% 60% at 10% 80%, rgba(0,20,50,0.5) 0%, transparent 55%)',
-            'linear-gradient(150deg, #04080d 0%, #091320 55%, #04090e 100%)',
+            'radial-gradient(ellipse 70% 80% at 80% 50%, rgba(180,100,20,0.22) 0%, transparent 65%)',
+            'radial-gradient(ellipse 50% 60% at 10% 80%, rgba(100,40,10,0.35) 0%, transparent 55%)',
+            'linear-gradient(150deg, #0a0704 0%, #140e06 55%, #0a0704 100%)',
           ].join(', ')
         }} />
-        <div className="absolute inset-0 z-0 opacity-[0.025]"
-          style={{ backgroundImage: 'linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px)', backgroundSize: '48px 48px' }} />
 
         <div className="container mx-auto px-6 md:px-8 relative z-10 py-20">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
@@ -105,7 +103,7 @@ export default function Home() {
               </h1>
 
               <p className="font-body text-white/65 text-lg md:text-xl mb-10 max-w-lg leading-relaxed font-light">
-                חריטה אישית על עץ, עור ומתכת — שם, לוגו, או עיצוב שלך. כל פריט נוצר ביד ומוכן תוך 48 שעות.
+                חריטה אישית על עץ, עור ומתכת — שם, לוגו, או עיצוב שלך. כל פריט נוצר ביד עם תשומת לב לפרטים.
               </p>
 
               <div className="flex flex-col sm:flex-row-reverse gap-4 mb-10">
@@ -125,7 +123,6 @@ export default function Home() {
               <div className="flex flex-row-reverse gap-8 text-right">
                 {[
                   { num: '500+', label: 'לקוחות מרוצים' },
-                  { num: '48h', label: 'זמן אספקה' },
                   { num: '1200', label: 'DPI רזולוציה' },
                 ].map(s => (
                   <div key={s.num}>
@@ -164,16 +161,6 @@ export default function Home() {
                   <div className="text-xs text-on-surface-variant mt-0.5">רזולוציית חריטה</div>
                 </div>
 
-                {/* Floating card — delivery */}
-                <div className="absolute -top-5 -left-5 bg-surface-container-lowest/95 backdrop-blur-md rounded-2xl p-4 shadow-2xl border border-outline-variant/20">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-primary text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>local_shipping</span>
-                    <div>
-                      <div className="font-headline font-bold text-on-surface text-sm leading-none">משלוח חינם</div>
-                      <div className="text-xs text-on-surface-variant mt-0.5">48 שעות</div>
-                    </div>
-                  </div>
-                </div>
 
                 {/* Second small image */}
                 <div className="absolute -bottom-8 left-12 w-24 h-24 rounded-2xl overflow-hidden border-2 border-surface-container-lowest shadow-xl">
