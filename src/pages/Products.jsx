@@ -24,17 +24,46 @@ function imgSrc(product) {
   return product.image_url.startsWith('/') ? STATIC_BASE + product.image_url : product.image_url
 }
 
+async function fetchWithRetry(url, retries = 4, delay = 3000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await axios.get(url, { timeout: 12000 })
+    } catch (err) {
+      if (i === retries - 1) throw err
+      await new Promise(res => setTimeout(res, delay))
+    }
+  }
+}
+
+const BASE_TITLE = 'חותם | חריטת לייזר אישית על עץ, עור ומתכת – ישראל'
+const BASE_DESC = 'סטודיו חותם – חריטת לייזר אישית על עץ, עור ומתכת. מתנות מחורטות מיוחדות, שילוט עסקי ומיתוג ייחודי.'
+
 export default function Products() {
   const [products, setProducts] = useState([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
   const [activeCategory, setActiveCategory] = useState('all')
 
   useEffect(() => {
-    axios.get(`${API}/products`)
-      .then(r => setProducts(r.data.data || []))
-      .catch(() => {})
-      .finally(() => setLoading(false))
+    document.title = 'כל המוצרים – חריטת לייזר אישית | חותם'
+    const meta = document.querySelector('meta[name="description"]')
+    if (meta) meta.setAttribute('content', 'עיינו בכל מוצרי חריטת הלייזר של חותם – כלי שתייה, אביזרי עור, שילוט, עיצוב הבית ומתנות. כל פריט מותאם אישית.')
+    return () => {
+      document.title = BASE_TITLE
+      if (meta) meta.setAttribute('content', BASE_DESC)
+    }
   }, [])
+
+  const load = () => {
+    setLoading(true)
+    setError(false)
+    fetchWithRetry(`${API}/products`)
+      .then(r => setProducts(r.data.data || []))
+      .catch(() => setError(true))
+      .finally(() => setLoading(false))
+  }
+
+  useEffect(() => { load() }, [])
 
   const categories = ['all', ...new Set(products.map(p => p.category))]
   const filtered = activeCategory === 'all' ? products : products.filter(p => p.category === activeCategory)
@@ -83,16 +112,28 @@ export default function Products() {
       <section className="py-12 px-6 md:px-8 bg-surface">
         <div className="max-w-7xl mx-auto">
           {loading ? (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-pulse">
-              {[...Array(8)].map((_, i) => (
-                <div key={i} className="bg-surface-container-low rounded-xl overflow-hidden">
-                  <div className="aspect-square bg-surface-container" />
-                  <div className="p-5 space-y-2">
-                    <div className="h-4 bg-surface-container rounded w-3/4" />
-                    <div className="h-3 bg-surface-container rounded w-full" />
+            <div>
+              <p className="text-center text-on-surface-variant text-sm mb-8 animate-pulse">טוען מוצרים...</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-pulse">
+                {[...Array(8)].map((_, i) => (
+                  <div key={i} className="bg-surface-container-low rounded-xl overflow-hidden">
+                    <div className="aspect-square bg-surface-container" />
+                    <div className="p-5 space-y-2">
+                      <div className="h-4 bg-surface-container rounded w-3/4" />
+                      <div className="h-3 bg-surface-container rounded w-full" />
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))}
+              </div>
+            </div>
+          ) : error ? (
+            <div className="text-center py-20">
+              <span className="material-symbols-outlined text-5xl block mb-4 text-on-surface-variant">wifi_off</span>
+              <p className="text-on-surface font-headline font-bold text-xl mb-2">לא הצלחנו לטעון את המוצרים</p>
+              <p className="text-on-surface-variant text-sm mb-6">ייתכן שהשרת מתחמם — נסו שוב בעוד רגע</p>
+              <button onClick={load} className="btn-primary px-8 py-3">
+                נסה שוב
+              </button>
             </div>
           ) : filtered.length === 0 ? (
             <div className="text-center py-20 text-on-surface-variant">

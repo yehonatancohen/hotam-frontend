@@ -57,12 +57,23 @@ const REVIEWS = [
   },
 ]
 
+async function fetchWithRetry(url, retries = 4, delay = 3000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      return await axios.get(url, { timeout: 12000 })
+    } catch (err) {
+      if (i === retries - 1) throw err
+      await new Promise(res => setTimeout(res, delay))
+    }
+  }
+}
+
 export default function Home() {
   const [products, setProducts] = useState([])
   const [showSticky, setShowSticky] = useState(false)
 
   useEffect(() => {
-    axios.get(`${API}/products`)
+    fetchWithRetry(`${API}/products`)
       .then(r => setProducts(r.data.data || []))
       .catch(() => setProducts([]))
   }, [])
@@ -98,12 +109,12 @@ export default function Home() {
               </div>
 
               <h1 className="font-headline font-black text-5xl md:text-6xl xl:text-7xl text-white mb-6 leading-[1.05] hero-text-shadow">
-                מתנות שלא<br />
-                <span className="text-primary-fixed-dim">נשכחות לעולם</span>
+                לא מתנה —<br />
+                <span className="text-primary-fixed-dim">חותם.</span>
               </h1>
 
               <p className="font-body text-white/65 text-lg md:text-xl mb-10 max-w-lg leading-relaxed font-light">
-                חריטה אישית על עץ, עור ומתכת — שם, לוגו, או עיצוב שלך. כל פריט נוצר ביד עם תשומת לב לפרטים.
+                חריטת לייזר על עץ, עור ומתכת. שם, תאריך, לוגו — כל פריט נולד פעם אחת, בדיוק בשבילך.
               </p>
 
               <div className="flex flex-col sm:flex-row-reverse gap-4 mb-10">
@@ -123,7 +134,8 @@ export default function Home() {
               <div className="flex flex-row-reverse gap-8 text-right">
                 {[
                   { num: '500+', label: 'לקוחות מרוצים' },
-                  { num: '1200', label: 'DPI רזולוציה' },
+                  { num: '100%', label: 'ייחודי לך' },
+                  { num: '5★', label: 'דירוג ממוצע' },
                 ].map(s => (
                   <div key={s.num}>
                     <div className="font-headline font-black text-2xl md:text-3xl text-white leading-none">{s.num}</div>
@@ -155,12 +167,22 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Floating card — DPI */}
+                {/* Floating card — rating */}
                 <div className="absolute -bottom-5 -right-5 bg-surface-container-lowest/95 backdrop-blur-md rounded-2xl p-4 shadow-2xl border border-outline-variant/20">
-                  <div className="font-headline font-black text-3xl text-primary leading-none">1200<span className="text-base font-body font-normal text-on-surface-variant"> DPI</span></div>
-                  <div className="text-xs text-on-surface-variant mt-0.5">רזולוציית חריטה</div>
+                  <div className="font-headline font-black text-3xl text-primary leading-none">4.9<span className="text-base font-body font-normal text-on-surface-variant"> ★</span></div>
+                  <div className="text-xs text-on-surface-variant mt-0.5">דירוג לקוחות</div>
                 </div>
 
+                {/* Floating card — handmade */}
+                <div className="absolute -top-5 -left-5 bg-surface-container-lowest/95 backdrop-blur-md rounded-2xl p-4 shadow-2xl border border-outline-variant/20">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-primary text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>handyman</span>
+                    <div>
+                      <div className="font-headline font-bold text-on-surface text-sm leading-none">עבודת יד</div>
+                      <div className="text-xs text-on-surface-variant mt-0.5">כל פריט ייחודי</div>
+                    </div>
+                  </div>
+                </div>
 
                 {/* Second small image */}
                 <div className="absolute -bottom-8 left-12 w-24 h-24 rounded-2xl overflow-hidden border-2 border-surface-container-lowest shadow-xl">
@@ -224,7 +246,7 @@ export default function Home() {
             {[
               { emoji: '📤', step: '01', title: 'שולחים עיצוב', text: 'תמונה, לוגו או טקסט — דרך האתר שלנו. אנחנו מטפלים בכל השאר.' },
               { emoji: '✅', step: '02', title: 'מקבלים הצעה', text: 'תוך שעה, עם אישור מחיר ומועד אספקה. ללא הפתעות.' },
-              { emoji: '📦', step: '03', title: 'מקבלים הביתה', text: 'משלוח לכל הארץ תוך 2–4 ימי עסקים, עם מעקב בזמן אמת.' },
+              { emoji: '📦', step: '03', title: 'מקבלים הביתה', text: 'הפריט מגיע אליכם ארוז בקפידה, מוכן להענקה.' },
             ].map((s, i) => (
               <div key={i} className="flex flex-col items-center text-center px-6 relative">
                 <div className="w-20 h-20 bg-surface-container-low rounded-full flex items-center justify-center text-3xl mb-5 border-4 border-surface relative z-10">
@@ -251,7 +273,7 @@ export default function Home() {
         <div className="flex gap-0 max-w-full">
           {PROCESS_IMGS.map((src, i) => (
             <div key={i} className="flex-1 min-h-[180px] overflow-hidden relative">
-              <img src={src} alt="" className="w-full h-full object-cover opacity-60 hover:opacity-80 transition-opacity duration-500 hover:scale-105 transform" style={{ minHeight: 180 }} />
+              <img src={src} alt="" loading="lazy" className="w-full h-full object-cover opacity-60 hover:opacity-80 transition-opacity duration-500 hover:scale-105 transform" style={{ minHeight: 180 }} />
               <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
             </div>
           ))}
@@ -304,8 +326,8 @@ export default function Home() {
               <div className="absolute inset-0 rounded-xl border border-primary/20" />
             </div>
             <div className="absolute -bottom-6 -right-6 bg-surface-container-lowest/10 backdrop-blur-md border border-white/10 rounded-xl p-5 text-white">
-              <div className="font-headline font-black text-4xl text-primary-fixed-dim">1200 <span className="text-lg">DPI</span></div>
-              <div className="text-xs text-white/50 mt-0.5 uppercase tracking-widest">רזולוציית חריטה</div>
+              <div className="font-headline font-black text-4xl text-primary-fixed-dim">500+ <span className="text-lg">לקוחות</span></div>
+              <div className="text-xs text-white/50 mt-0.5 uppercase tracking-widest">מרוצים ברחבי הארץ</div>
             </div>
             <div className="absolute -top-6 -left-6 w-48 h-48 bg-secondary/20 rounded-full blur-3xl z-[-1]" />
           </div>
@@ -319,9 +341,9 @@ export default function Home() {
             </p>
             <ul className="space-y-8">
               {[
-                { icon: 'precision_manufacturing', title: 'דיוק מיקרוסקופי', text: 'חריטה ברזולוציה של 1200DPI — אפילו תמונות ופרטים דקים ביותר נשמרים בשלמות.' },
+                { icon: 'precision_manufacturing', title: 'דיוק מיקרוסקופי', text: 'חריטה ברמה שמאפשרת שימור של אפילו תמונות ופרטים דקים ביותר — הכל נשמר בשלמות.' },
                 { icon: 'eco', title: 'חומרים טבעיים בלבד', text: 'עץ מלא, עור אמיתי, מתכות בגימורים טבעיים — ללא ציפויים מלאכותיים.' },
-                { icon: 'local_shipping', title: 'משלוח מהיר לכל הארץ', text: 'כל הזמנה ארוזה בקפידה ומגיעה תוך 2–4 ימי עסקים עם מעקב מלא.' },
+                { icon: 'workspace_premium', title: 'אחריות מלאה', text: 'כל פריט עובר בדיקת איכות לפני המשלוח — אנחנו עומדים מאחורי כל מוצר.' },
               ].map(item => (
                 <li key={item.icon} className="flex flex-row-reverse items-start gap-5">
                   <div className="bg-primary-container/30 p-3.5 rounded-xl text-primary-fixed border border-primary/20 shrink-0">
@@ -469,7 +491,7 @@ function ProductCard({ product, className = '', large, wide, popular }) {
           </div>
         )}
         <div className="md:w-1/2 relative min-h-[280px] md:min-h-[360px] overflow-hidden">
-          <img src={src} alt={product.name_he} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+          <img src={src} alt={product.name_he} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
           <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent" />
         </div>
         <div className="md:w-1/2 p-10 md:p-14 flex flex-col justify-center">
@@ -498,7 +520,7 @@ function ProductCard({ product, className = '', large, wide, popular }) {
         </div>
       )}
       <div className={`relative overflow-hidden ${large ? 'aspect-video' : 'aspect-square'}`}>
-        <img src={src} alt={product.name_he} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+        <img src={src} alt={product.name_he} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
       </div>
       <div className="p-7 flex-1 flex flex-col">

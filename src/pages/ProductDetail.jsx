@@ -19,8 +19,12 @@ const CATEGORY_LABELS = {
   home_decor: 'עיצוב הבית', gifts: 'מתנות', mixed: 'מגוון'
 }
 
+const SITE_URL = 'https://hatam-laser.co.il'
+const BASE_TITLE = 'חותם | חריטת לייזר אישית על עץ, עור ומתכת – ישראל'
+const BASE_DESC = 'סטודיו חותם – חריטת לייזר אישית על עץ, עור ומתכת. מתנות מחורטות מיוחדות, שילוט עסקי ומיתוג ייחודי.'
+
 const FEATURES_BY_CATEGORY = {
-  drinkware: ['חריטה עמידה למים', 'מתאים לשטיפה במדיח', 'רזולוציה 1200 DPI', 'גימור פרימיום'],
+  drinkware: ['חריטה עמידה למים', 'מתאים לשטיפה במדיח', 'חריטה מדויקת ועמידה', 'גימור פרימיום'],
   accessories: ['עור איכותי בדרגה A', 'חריטה מונולית', 'מתנה בקופסת מתנה', 'כתב יד / מודרני / קלאסי'],
   signage: ['אקריליק 5mm', 'עמיד UV', 'גדלים מותאמים אישית', 'עיגון קיר כלול'],
   home_decor: ['עץ אלון מלא', 'גימור שמן טבעי', 'מידות לפי בחירה', 'תלייה קלה'],
@@ -44,7 +48,6 @@ export default function ProductDetail() {
     axios.get(`${API}/products/${productId}`)
       .then(r => {
         setProduct(r.data.data)
-        // load related
         return axios.get(`${API}/products`)
       })
       .then(r => {
@@ -54,6 +57,71 @@ export default function ProductDetail() {
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [productId])
+
+  useEffect(() => {
+    if (!product) return
+    const desc = `${product.name_he} – ${product.description_he || 'חריטת לייזר אישית'} | חותם סטודיו לייזר`
+    document.title = `${product.name_he} – חריטת לייזר אישית | חותם`
+    const metaDesc = document.querySelector('meta[name="description"]')
+    if (metaDesc) metaDesc.setAttribute('content', desc)
+    // Canonical
+    let canonical = document.querySelector('link[rel="canonical"]')
+    if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.appendChild(canonical) }
+    canonical.href = `${SITE_URL}/products/${productId}`
+    // OG
+    const ogTitle = document.querySelector('meta[property="og:title"]')
+    const ogDesc = document.querySelector('meta[property="og:description"]')
+    const ogImg = document.querySelector('meta[property="og:image"]')
+    const ogUrl = document.querySelector('meta[property="og:url"]')
+    if (ogTitle) ogTitle.setAttribute('content', `${product.name_he} | חותם`)
+    if (ogDesc) ogDesc.setAttribute('content', desc)
+    if (ogImg) ogImg.setAttribute('content', imgSrc(product))
+    if (ogUrl) ogUrl.setAttribute('content', `${SITE_URL}/products/${productId}`)
+    // Product + Breadcrumb JSON-LD
+    const existing = document.getElementById('product-schema')
+    if (existing) existing.remove()
+    const script = document.createElement('script')
+    script.type = 'application/ld+json'
+    script.id = 'product-schema'
+    script.text = JSON.stringify([
+      {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: product.name_he,
+        description: product.description_he || product.description,
+        image: imgSrc(product),
+        brand: { '@type': 'Brand', name: 'חותם' },
+        offers: {
+          '@type': 'Offer',
+          price: product.price,
+          priceCurrency: 'ILS',
+          availability: 'https://schema.org/InStock',
+          url: `${SITE_URL}/products/${productId}`,
+          seller: { '@type': 'Organization', name: 'חותם - סטודיו לייזר' }
+        }
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'ראשי', item: `${SITE_URL}/` },
+          { '@type': 'ListItem', position: 2, name: 'מוצרים', item: `${SITE_URL}/products` },
+          { '@type': 'ListItem', position: 3, name: product.name_he, item: `${SITE_URL}/products/${productId}` },
+        ]
+      }
+    ])
+    document.head.appendChild(script)
+    return () => {
+      document.title = BASE_TITLE
+      if (metaDesc) metaDesc.setAttribute('content', BASE_DESC)
+      canonical.href = `${SITE_URL}/`
+      if (ogTitle) ogTitle.setAttribute('content', 'חותם | חריטת לייזר אישית על עץ, עור ומתכת')
+      if (ogDesc) ogDesc.setAttribute('content', BASE_DESC)
+      if (ogImg) ogImg.setAttribute('content', 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=1200&q=85&fit=crop')
+      if (ogUrl) ogUrl.setAttribute('content', `${SITE_URL}/`)
+      document.getElementById('product-schema')?.remove()
+    }
+  }, [product, productId])
 
   if (loading) {
     return (

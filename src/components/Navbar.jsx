@@ -1,13 +1,12 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
 
-// hash: section id to scroll to (only valid on '/')
 const NAV = [
-  { label: 'ראשי',         href: '/',           hash: null,       matchPath: (p) => p === '/' },
-  { label: 'מוצרים',       href: '/products',   hash: null,       matchPath: (p) => p.startsWith('/products') },
-  { label: 'אודות',        href: '/',           hash: 'about',    matchPath: () => false },
-  { label: 'צרו קשר',      href: '/',           hash: 'contact',  matchPath: () => false },
+  { label: 'ראשי',    href: '/', hash: null,      matchPath: (p) => p === '/', matchHash: null },
+  { label: 'מוצרים', href: '/products', hash: null, matchPath: (p) => p.startsWith('/products'), matchHash: null },
+  { label: 'אודות',  href: '/', hash: 'about',    matchPath: () => false, matchHash: 'about' },
+  { label: 'צרו קשר', href: '/', hash: 'contact', matchPath: () => false, matchHash: 'contact' },
 ]
 
 function smoothScrollTo(id) {
@@ -17,9 +16,40 @@ function smoothScrollTo(id) {
 
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [activeHash, setActiveHash] = useState(null)
   const location = useLocation()
   const navigate = useNavigate()
   const { cartItem } = useCart()
+
+  // Track which section is in view when on the home page
+  useEffect(() => {
+    if (location.pathname !== '/') { setActiveHash(null); return }
+    const sections = ['contact', 'about']
+    const observers = sections.map(id => {
+      const el = document.getElementById(id)
+      if (!el) return null
+      const obs = new IntersectionObserver(
+        ([entry]) => { if (entry.isIntersecting) setActiveHash(id) },
+        { threshold: 0.3 }
+      )
+      obs.observe(el)
+      return obs
+    })
+    const onScroll = () => {
+      if (window.scrollY < 200) setActiveHash(null)
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      observers.forEach(o => o?.disconnect())
+      window.removeEventListener('scroll', onScroll)
+    }
+  }, [location.pathname])
+
+  const isActive = (link) => {
+    if (link.matchHash && location.pathname === '/') return activeHash === link.matchHash
+    if (link.matchPath(location.pathname)) return !activeHash
+    return false
+  }
 
   const handleClick = (link, e) => {
     e.preventDefault()
@@ -73,23 +103,20 @@ export default function Navbar() {
 
         {/* Desktop Nav */}
         <div className="hidden md:flex flex-row-reverse items-center gap-8">
-          {NAV.map(link => {
-            const active = link.matchPath(location.pathname)
-            return (
-              <a
-                key={link.label}
-                href={link.hash ? `#${link.hash}` : link.href}
-                onClick={(e) => handleClick(link, e)}
-                className={`font-headline font-bold text-sm tracking-tight transition-all duration-200 cursor-pointer select-none ${
-                  active
-                    ? 'text-primary border-b-2 border-primary pb-0.5'
-                    : 'text-on-surface/70 hover:text-primary'
-                }`}
-              >
-                {link.label}
-              </a>
-            )
-          })}
+          {NAV.map(link => (
+            <a
+              key={link.label}
+              href={link.hash ? `#${link.hash}` : link.href}
+              onClick={(e) => handleClick(link, e)}
+              className={`font-headline font-bold text-sm tracking-tight transition-all duration-200 cursor-pointer select-none ${
+                isActive(link)
+                  ? 'text-primary border-b-2 border-primary pb-0.5'
+                  : 'text-on-surface/70 hover:text-primary'
+              }`}
+            >
+              {link.label}
+            </a>
+          ))}
         </div>
 
         {/* Cart + mobile toggle */}
@@ -126,7 +153,7 @@ export default function Navbar() {
               href={link.hash ? `#${link.hash}` : link.href}
               onClick={(e) => handleClick(link, e)}
               className={`block font-headline font-bold text-base py-3.5 border-b border-outline-variant/10 last:border-0 cursor-pointer transition-colors text-right ${
-                link.matchPath(location.pathname) ? 'text-primary' : 'text-on-surface/80 hover:text-primary'
+                isActive(link) ? 'text-primary' : 'text-on-surface/80 hover:text-primary'
               }`}
             >
               {link.label}

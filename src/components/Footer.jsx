@@ -20,7 +20,7 @@ export default function Footer() {
 
           {/* Copyright */}
           <div className="text-white/40 font-body text-xs">
-            כל הזכויות שמורות © 2024 חותם - סטודיו לייזר
+            כל הזכויות שמורות © 2026 חותם - סטודיו לייזר
           </div>
         </div>
 
@@ -34,10 +34,6 @@ export default function Footer() {
             <span className="flex items-center gap-1.5">
               <span className="material-symbols-outlined text-sm">verified_user</span>
               PCI-DSS
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="material-symbols-outlined text-sm">local_shipping</span>
-              משלוח חינם מ-₪300
             </span>
           </div>
           <div>עיצוב ופיתוח: חותם לייזר סטודיו</div>
