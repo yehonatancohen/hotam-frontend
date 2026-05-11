@@ -182,9 +182,9 @@ export function LivePreview({
   const zone = ZONES.find(z => z.id === placement) || ZONES[4]
 
   const placementFlex = {
-    tl: 'items-start justify-end', tc: 'items-start justify-center', tr: 'items-start justify-start',
-    cl: 'items-center justify-end', cc: 'items-center justify-center', cr: 'items-center justify-start',
-    bl: 'items-end justify-end', bc: 'items-end justify-center', br: 'items-end justify-start',
+    tl: 'items-start justify-start', tc: 'items-start justify-center', tr: 'items-start justify-end',
+    cl: 'items-center justify-start', cc: 'items-center justify-center', cr: 'items-center justify-end',
+    bl: 'items-end justify-start', bc: 'items-end justify-center', br: 'items-end justify-end',
   }[placement] || 'items-center justify-center'
 
   const overlayStyle = designZone
@@ -193,12 +193,14 @@ export function LivePreview({
         left: `${designZone.x}%`, top: `${designZone.y}%`,
         width: `${designZone.width}%`, height: `${designZone.height}%`,
         transform: designZone.rotation ? `rotate(${designZone.rotation}deg)` : undefined,
+        direction: 'ltr'
       }
     : {
         position: 'absolute',
         left: `${zone.x * 100}%`, top: `${zone.y * 100}%`,
         transform: 'translate(-50%, -50%)',
         width: '65%', height: '65%',
+        direction: 'ltr'
       }
 
   const textStyle = {
@@ -215,6 +217,7 @@ export function LivePreview({
       tr: 'right', cr: 'right', br: 'right'
     }[placement] || 'center',
     whiteSpace: 'pre-wrap',
+    direction: 'rtl' // Keep the text itself reading RTL
   }
 
   return (
