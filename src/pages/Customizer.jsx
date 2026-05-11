@@ -384,11 +384,23 @@ export default function Customizer() {
 
         let mats = cfg.materials
         if (p.available_materials) {
-          const avail = p.available_materials.split(',').map(s => s.trim().toLowerCase())
-          const matched = cfg.materials.filter(m =>
-            avail.includes(m.id.toLowerCase()) || avail.includes(m.label.toLowerCase())
-          )
-          if (matched.length > 0) mats = matched
+          const avail = p.available_materials.split(',').map(s => s.trim()).filter(Boolean)
+          if (avail.length > 0) {
+            mats = avail.map(avName => {
+              const avLower = avName.toLowerCase()
+              const existing = cfg.materials.find(m => m.id.toLowerCase() === avLower || m.label.toLowerCase() === avLower)
+              if (existing) return existing
+              
+              // Fallback generic material object for custom user-created tags
+              return { 
+                id: avName, 
+                label: avName, 
+                bg: '#E4DDD6', 
+                textColor: '#1C1917', 
+                blendMode: 'multiply' 
+              }
+            })
+          }
         }
         setMaterials(mats)
         setSelectedMaterial(mats[0].id)
