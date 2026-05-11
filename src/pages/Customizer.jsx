@@ -182,9 +182,9 @@ export function LivePreview({
   const zone = ZONES.find(z => z.id === placement) || ZONES[4]
 
   const placementFlex = {
-    tl: 'items-start justify-start', tc: 'items-start justify-center', tr: 'items-start justify-end',
-    cl: 'items-center justify-start', cc: 'items-center justify-center', cr: 'items-center justify-end',
-    bl: 'items-end justify-start', bc: 'items-end justify-center', br: 'items-end justify-end',
+    tl: 'items-start justify-end', tc: 'items-start justify-center', tr: 'items-start justify-start',
+    cl: 'items-center justify-end', cc: 'items-center justify-center', cr: 'items-center justify-start',
+    bl: 'items-end justify-end', bc: 'items-end justify-center', br: 'items-end justify-start',
   }[placement] || 'items-center justify-center'
 
   const overlayStyle = designZone
@@ -210,9 +210,9 @@ export function LivePreview({
     lineHeight: 1.3,
     wordBreak: 'break-word',
     textAlign: {
-      tl: 'right', cl: 'right', bl: 'right',
+      tl: 'left', cl: 'left', bl: 'left',
       tc: 'center', cc: 'center', bc: 'center',
-      tr: 'left', cr: 'left', br: 'left'
+      tr: 'right', cr: 'right', br: 'right'
     }[placement] || 'center',
     whiteSpace: 'pre-wrap',
   }
@@ -765,7 +765,7 @@ export default function Customizer() {
                       }}
                     />
                     {/* 3×3 zone grid */}
-                    <div className="absolute inset-1.5 grid grid-cols-3 grid-rows-3 gap-0.5">
+                    <div className="absolute inset-1.5 grid grid-cols-3 grid-rows-3 gap-0.5" style={{ direction: 'ltr' }}>
                       {ZONES.map(z => (
                         <button
                           key={z.id}
