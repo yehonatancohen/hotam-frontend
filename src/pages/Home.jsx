@@ -151,20 +151,13 @@ export default function Home() {
                 {/* Main image */}
                 <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-white/10 aspect-square">
                   <img
-                    src="https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=800&q=85&fit=crop"
-                    alt="חריטת לייזר על עור"
+                    src="/hero.jpg"
+                    alt="חריטת לייזר במכונת CNC"
                     className="w-full h-full object-cover"
                     style={{ filter: 'brightness(0.9) contrast(1.05)' }}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-                  {/* Live laser chip */}
-                  <div className="absolute top-4 right-4 flex items-center gap-2 bg-black/40 backdrop-blur-md px-3 py-1.5 rounded-full border border-white/20">
-                    <span className="relative flex h-2 w-2">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary-fixed-dim opacity-75" />
-                      <span className="relative inline-flex rounded-full h-2 w-2 bg-primary-fixed-dim" />
-                    </span>
-                    <span className="text-[10px] font-bold tracking-widest text-white uppercase">Live Engraving</span>
-                  </div>
+
                 </div>
 
                 {/* Floating card — rating */}
@@ -184,10 +177,7 @@ export default function Home() {
                   </div>
                 </div>
 
-                {/* Second small image */}
-                <div className="absolute -bottom-8 left-12 w-24 h-24 rounded-2xl overflow-hidden border-2 border-surface-container-lowest shadow-xl">
-                  <img src="https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=300&q=80&fit=crop" alt="" className="w-full h-full object-cover" />
-                </div>
+
               </div>
             </div>
 
