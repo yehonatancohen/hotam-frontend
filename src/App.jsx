@@ -21,6 +21,14 @@ function TwemojiParser() {
   return null
 }
 
+function ScrollToTop() {
+  const { pathname } = useLocation()
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [pathname])
+  return null
+}
+
 function AnnouncementBar() {
   const [dismissed, setDismissed] = useState(false)
   if (dismissed) return null
@@ -43,6 +51,7 @@ export default function App() {
     <BrowserRouter>
       <CartProvider>
         <div className="flex flex-col min-h-screen">
+          <ScrollToTop />
           <TwemojiParser />
           <AnnouncementBar />
           <Navbar />
@@ -52,7 +61,7 @@ export default function App() {
               <Route path="/products" element={<Products />} />
               <Route path="/products/:productId" element={<ProductDetail />} />
               <Route path="/customizer/:productId" element={<Customizer />} />
-              <Route path="/checkout" element={<ComingSoon />} />
+              <Route path="/checkout" element={<Checkout />} />
               <Route path="/order-confirmation/:orderId" element={<OrderConfirmation />} />
               <Route path="/coming-soon" element={<ComingSoon />} />
             </Routes>

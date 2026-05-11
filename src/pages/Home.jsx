@@ -239,8 +239,8 @@ export default function Home() {
               { emoji: '📦', step: '03', title: 'מקבלים הביתה', text: 'הפריט מגיע אליכם ארוז בקפידה, מוכן להענקה.' },
             ].map((s, i) => (
               <div key={i} className="flex flex-col items-center text-center px-6 relative">
-                <div className="w-20 h-20 bg-surface-container-low rounded-full flex items-center justify-center text-3xl mb-5 border-4 border-surface relative z-10">
-                  {s.emoji}
+                <div className="w-20 h-20 bg-surface-container-low rounded-full flex items-center justify-center text-3xl mb-5 border-4 border-surface relative z-10 shadow-sm">
+                  <img src={`https://emojicdn.elk.sh/${s.emoji}?style=apple`} alt="emoji" className="w-8 h-8 object-contain" />
                 </div>
                 <div className="text-xs font-bold text-primary uppercase tracking-widest mb-2">{s.step}</div>
                 <h3 className="font-headline font-bold text-xl text-on-surface mb-3">{s.title}</h3>
@@ -416,9 +416,8 @@ export default function Home() {
             </p>
             <div className="space-y-5">
               {[
-                { icon: 'phone', label: 'טלפון', value: '050-000-0000' },
-                { icon: 'email', label: 'דוא"ל', value: 'studio@hatam-laser.co.il' },
-                { icon: 'location_on', label: 'כתובת', value: 'תל אביב, ישראל' },
+                { icon: 'email', label: 'דוא"ל', value: 'support@hotamstudio.co.il' },
+                { icon: 'location_on', label: 'כתובת', value: 'בנימינה' },
                 { icon: 'schedule', label: 'שעות פתיחה', value: 'א׳–ה׳  09:00–18:00' },
               ].map(item => (
                 <div key={item.icon} className="flex flex-row-reverse items-center gap-4">

@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useCart } from '../context/CartContext'
+import { LivePreview, CATEGORY_CONFIG, FONT_DEFS, SIZE_DEFS, getPreviewImage } from './Customizer'
 
 const API = import.meta.env.VITE_API_URL
 
@@ -96,9 +97,11 @@ export default function Checkout() {
 
   // Pricing
   const subtotal = cartItem?.price || 0
-  const vat = subtotal * 0.17
   const shipping = subtotal >= 300 ? 0 : 25
-  const total = subtotal + vat + shipping - discount
+  const total = subtotal + shipping - discount
+
+  const { url: productImg, zone: designZone } = cartItem ? getPreviewImage(cartItem.product) : { url: null, zone: null }
+  const materials = cartItem ? (CATEGORY_CONFIG[cartItem.product.category] || CATEGORY_CONFIG.mixed).materials : []
 
   const updateField = (field, value) => {
     setForm(prev => ({ ...prev, [field]: value }))
@@ -125,36 +128,32 @@ export default function Checkout() {
     return e
   }
 
-  const handleSubmit = async (e) => {
+  const [outOfStock, setOutOfStock] = useState(false)
+  const [waitlistEmail, setWaitlistEmail] = useState('')
+  const [waitlistSuccess, setWaitlistSuccess] = useState(false)
+
+  const handleSubmit = (e) => {
     e.preventDefault()
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
     if (!cartItem) { navigate('/customizer'); return }
+    setOutOfStock(true)
+  }
 
+  const handleWaitlist = async (e) => {
+    e.preventDefault()
+    if (!waitlistEmail) return
     setSubmitting(true)
     try {
-      const payload = {
-        ...form,
-        product_id: cartItem.product.id,
-        product_name: cartItem.product.name_he,
-        product_price: cartItem.product.price,
-        engraving_text: cartItem.engravingText,
-        font_style: cartItem.fontStyle,
-        material: cartItem.material,
-        quantity: cartItem.quantity,
-        payment_method: paymentMethod,
-        promo_code: promoCode || undefined,
-        discount,
-      }
-      const res = await axios.post(`${API}/orders`, payload)
-      clearCart()
-      navigate(`/order-confirmation/${res.data.data.id}`)
+      await axios.post(`${API}/waitlist`, {
+        email: waitlistEmail,
+        product_id: cartItem?.product?.id
+      })
+      setWaitlistSuccess(true)
     } catch (err) {
-      console.error(err)
-      alert('אירעה שגיאה. נסה שוב.')
-    } finally {
-      setSubmitting(false)
+      alert('אירעה שגיאה. אנא נסה שנית.')
     }
+    setSubmitting(false)
   }
 
   if (!cartItem) {
@@ -325,21 +324,21 @@ export default function Checkout() {
                   </h2>
 
                   {/* Product preview */}
-                  <div className="relative aspect-video w-full rounded-xl overflow-hidden mb-7 bg-[#2f3131] flex items-center justify-center">
-                    <div className="text-center p-6">
-                      <div className="font-headline font-black text-4xl text-primary-fixed-dim laser-glow">
-                        {cartItem.engravingText || 'חריטה אישית'}
-                      </div>
-                    </div>
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end p-5">
-                      <div className="text-white">
-                        <span className="bg-primary px-3 py-1 rounded-sm text-[10px] font-bold mb-1.5 inline-block uppercase tracking-wider">
-                          התאמה אישית
-                        </span>
-                        <h3 className="text-lg font-bold">{cartItem.product.name_he}</h3>
-                        <p className="text-sm opacity-90">חריטה: &quot;{cartItem.engravingText}&quot;</p>
-                      </div>
-                    </div>
+                  <div className="mb-7">
+                    <LivePreview
+                      product={cartItem.product}
+                      productImg={productImg}
+                      designZone={designZone}
+                      engravingType={cartItem.engravingType}
+                      engravingText={cartItem.engravingText}
+                      engravingText2=""
+                      material={materials.find(m => m.id === cartItem.material)}
+                      font={FONT_DEFS[cartItem.fontStyle] || FONT_DEFS['modern']}
+                      sizeScale={SIZE_DEFS.find(s => s.id === cartItem.engravingSize)?.scale || 1.0}
+                      placement={cartItem.placement || 'cc'}
+                      uploadedImgSrc={cartItem.uploadedImgSrc}
+                      compact={true}
+                    />
                   </div>
 
                   {/* Cost breakdown */}
@@ -363,10 +362,7 @@ export default function Checkout() {
                         {shipping === 0 ? 'חינם' : `₪${shipping}`}
                       </span>
                     </div>
-                    <div className="flex justify-between items-center text-on-surface-variant">
-                      <span>מע&quot;מ (17%)</span>
-                      <span className="font-semibold">₪{vat.toFixed(2)}</span>
-                    </div>
+
                     <div className="pt-5 mt-5 border-t border-outline-variant/20">
                       <div className="flex justify-between items-baseline">
                         <span className="font-headline text-xl font-extrabold">סה&quot;כ לתשלום</span>
@@ -411,6 +407,43 @@ export default function Checkout() {
           </div>
         </form>
       </div>
+
+      {outOfStock && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-surface rounded-2xl p-8 max-w-md w-full text-center shadow-2xl relative border border-outline-variant/20">
+            <button onClick={() => setOutOfStock(false)} className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface">
+              <span className="material-symbols-outlined">close</span>
+            </button>
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-error/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-3xl text-error">inventory_2</span>
+            </div>
+            <h2 className="font-headline font-bold text-2xl text-on-surface mb-2">אוי לא, המלאי אזל!</h2>
+            <p className="text-on-surface-variant mb-6">
+              המוצר כרגע חסר במלאי עקב ביקוש גבוה.
+              השאירו מייל ונודיע לכם מיד כשהוא יחזור:
+            </p>
+            {waitlistSuccess ? (
+              <div className="bg-success/10 text-success font-bold py-4 rounded-xl border border-success/20">
+                נרשמת בהצלחה! נעדכן אותך בקרוב.
+              </div>
+            ) : (
+              <form onSubmit={handleWaitlist} className="flex flex-col gap-3">
+                <input
+                  type="email"
+                  value={waitlistEmail}
+                  onChange={e => setWaitlistEmail(e.target.value)}
+                  placeholder="האימייל שלך"
+                  required
+                  className="w-full h-12 bg-surface-container-low rounded-xl px-4 text-on-surface border border-outline-variant/30 focus:border-primary focus:outline-none"
+                />
+                <button type="submit" disabled={submitting} className="btn-primary w-full py-3.5">
+                  {submitting ? 'שולח...' : 'הודיעו לי שחוזר למלאי'}
+                </button>
+              </form>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   )
 }

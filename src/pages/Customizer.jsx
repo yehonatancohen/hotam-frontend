@@ -7,14 +7,14 @@ const API = import.meta.env.VITE_API_URL
 const STATIC_BASE = import.meta.env.VITE_STATIC_BASE
 
 // ── Per-category config (unchanged) ──────────────────────────────────────────
-const CATEGORY_CONFIG = {
+export const CATEGORY_CONFIG = {
   drinkware: {
     materials: [
       { id: 'matte_black',   label: 'מט שחור',    bg: '#1a1a1a', textColor: '#9acbff', blendMode: 'screen' },
       { id: 'silver',        label: 'כסוף',        bg: '#b0b8c1', textColor: '#1a1c1c', blendMode: 'multiply' },
       { id: 'white',         label: 'לבן',         bg: '#f5f5f5', textColor: '#1a1c1c', blendMode: 'multiply' },
     ],
-    fonts: ['modern', 'classic', 'handwriting'],
+    fonts: ['modern', 'classic', 'handwriting', 'typewriter', 'bold'],
     sizes: [
       { id: 'small',  label: '300ml', extra: 0 },
       { id: 'medium', label: '500ml', extra: 20 },
@@ -28,7 +28,7 @@ const CATEGORY_CONFIG = {
       { id: 'leather_brown', label: 'עור חום',  bg: '#8B6343', textColor: '#ffddb7', blendMode: 'screen' },
       { id: 'leather_black', label: 'עור שחור', bg: '#1c1c1c', textColor: '#c0c7d2', blendMode: 'screen' },
     ],
-    fonts: ['modern', 'classic', 'handwriting'],
+    fonts: ['modern', 'classic', 'handwriting', 'typewriter', 'bold'],
     sizes: [{ id: 'standard', label: 'סטנדרט', extra: 0 }],
     maxChars: 80,
     hint: 'ראשי תיבות, שם, ברכה',
@@ -53,7 +53,7 @@ const CATEGORY_CONFIG = {
       { id: 'oak_wood',   label: 'עץ אלון',  bg: '#78582f', textColor: '#ffddb7', blendMode: 'screen' },
       { id: 'dark_steel', label: 'מתכת כהה', bg: '#2f3131', textColor: '#9acbff', blendMode: 'screen' },
     ],
-    fonts: ['modern', 'classic', 'handwriting'],
+    fonts: ['modern', 'classic', 'handwriting', 'typewriter', 'bold'],
     sizes: [
       { id: 'small',  label: 'קטן',   extra: 0 },
       { id: 'medium', label: 'בינוני', extra: 50 },
@@ -80,7 +80,7 @@ const CATEGORY_CONFIG = {
       { id: 'oak_wood',   label: 'עץ אלון',  bg: '#78582f', textColor: '#ffddb7', blendMode: 'screen' },
       { id: 'leather',    label: 'עור',      bg: '#8B6343', textColor: '#ffddb7', blendMode: 'screen' },
     ],
-    fonts: ['modern', 'classic', 'handwriting'],
+    fonts: ['modern', 'classic', 'handwriting', 'typewriter', 'bold'],
     sizes: [
       { id: 'small',  label: 'קטן',   extra: 0 },
       { id: 'medium', label: 'בינוני', extra: 30 },
@@ -91,13 +91,15 @@ const CATEGORY_CONFIG = {
   },
 }
 
-const FONT_DEFS = {
+export const FONT_DEFS = {
   modern:      { label: 'מודרני',  style: { fontFamily: 'Heebo, sans-serif',     fontWeight: 900 } },
   classic:     { label: 'קלאסי',   style: { fontFamily: 'Assistant, sans-serif', fontWeight: 300, letterSpacing: '0.15em' } },
   handwriting: { label: 'כתב יד',  style: { fontFamily: 'cursive',               fontStyle: 'italic', fontWeight: 700 } },
+  typewriter:  { label: 'מכונת כתיבה', style: { fontFamily: 'monospace', fontWeight: 600 } },
+  bold:        { label: 'בולט',    style: { fontFamily: 'Impact, sans-serif', fontWeight: 900, letterSpacing: '0.05em' } },
 }
 
-const ZONES = [
+export const ZONES = [
   { id: 'tl', label: 'שמאל עליון',  x: 0.15, y: 0.20 },
   { id: 'tc', label: 'מרכז עליון',  x: 0.50, y: 0.20 },
   { id: 'tr', label: 'ימין עליון',  x: 0.85, y: 0.20 },
@@ -109,7 +111,7 @@ const ZONES = [
   { id: 'br', label: 'ימין תחתון', x: 0.85, y: 0.80 },
 ]
 
-const SIZE_DEFS = [
+export const SIZE_DEFS = [
   { id: 'sm', label: 'S',  desc: 'עדין',  scale: 0.7 },
   { id: 'md', label: 'M',  desc: 'מאוזן', scale: 1.0 },
   { id: 'lg', label: 'L',  desc: 'בולט',  scale: 1.3 },
@@ -123,7 +125,7 @@ function resolveUrl(url) {
   return url.startsWith('/') ? STATIC_BASE + url : url
 }
 
-function getPreviewImage(product) {
+export function getPreviewImage(product) {
   const preview = product?.images?.find(img => img.is_preview)
   if (preview) {
     return {
@@ -168,7 +170,7 @@ function Divider() {
 
 // ── Live Preview ──────────────────────────────────────────────────────────────
 
-function LivePreview({
+export function LivePreview({
   product, productImg, designZone,
   engravingType, engravingText, engravingText2,
   material, font, sizeScale, placement,
@@ -178,6 +180,12 @@ function LivePreview({
   const cfg = CATEGORY_CONFIG[product.category] || CATEGORY_CONFIG.mixed
   const previewText = engravingText || cfg.hint
   const zone = ZONES.find(z => z.id === placement) || ZONES[4]
+
+  const placementFlex = {
+    tl: 'items-start justify-start', tc: 'items-start justify-center', tr: 'items-start justify-end',
+    cl: 'items-center justify-start', cc: 'items-center justify-center', cr: 'items-center justify-end',
+    bl: 'items-end justify-start', bc: 'items-end justify-center', br: 'items-end justify-end',
+  }[placement] || 'items-center justify-center'
 
   const overlayStyle = designZone
     ? {
@@ -190,7 +198,7 @@ function LivePreview({
         position: 'absolute',
         left: `${zone.x * 100}%`, top: `${zone.y * 100}%`,
         transform: 'translate(-50%, -50%)',
-        maxWidth: '65%',
+        width: '65%', height: '65%',
       }
 
   const textStyle = {
@@ -201,7 +209,11 @@ function LivePreview({
     fontSize: compact ? `calc(1rem * ${sizeScale})` : `calc(2rem * ${sizeScale})`,
     lineHeight: 1.3,
     wordBreak: 'break-word',
-    textAlign: 'center',
+    textAlign: {
+      tl: 'right', cl: 'right', bl: 'right',
+      tc: 'center', cc: 'center', bc: 'center',
+      tr: 'left', cr: 'left', br: 'left'
+    }[placement] || 'center',
     whiteSpace: 'pre-wrap',
   }
 
@@ -233,8 +245,8 @@ function LivePreview({
 
         {/* Engraving overlay */}
         {engravingType !== 'logo' && (
-          <div className="pointer-events-none flex items-center justify-center" style={overlayStyle}>
-            <div style={textStyle}>
+          <div className={`pointer-events-none flex ${placementFlex} p-1`} style={overlayStyle}>
+            <div style={{ ...textStyle, maxWidth: '100%' }}>
               {previewText}
               {engravingText2 && (
                 <span className="block" style={{ fontSize: `calc(0.7em)`, marginTop: '0.3em' }}>
@@ -247,7 +259,7 @@ function LivePreview({
 
         {/* Uploaded image overlay */}
         {engravingType !== 'text' && uploadedImgSrc && (
-          <div className="pointer-events-none flex items-center justify-center" style={overlayStyle}>
+          <div className={`pointer-events-none flex ${placementFlex} p-1`} style={overlayStyle}>
             <img
               src={uploadedImgSrc}
               alt="לוגו"
@@ -256,6 +268,12 @@ function LivePreview({
                 opacity: 0.85,
                 mixBlendMode: material?.blendMode || 'screen',
                 objectFit: 'contain',
+                transform: `scale(${sizeScale})`,
+                transformOrigin: {
+                  tl: 'top right', tc: 'top center', tr: 'top left',
+                  cl: 'center right', cc: 'center center', cr: 'center left',
+                  bl: 'bottom right', bc: 'bottom center', br: 'bottom left'
+                }[placement] || 'center',
               }}
             />
           </div>
@@ -335,7 +353,7 @@ export default function Customizer() {
   const [selectedFont, setSelectedFont] = useState('modern')
   const [selectedSize, setSelectedSize] = useState(null)
   const [quantity, setQuantity] = useState(1)
-  const [engravingSize, setEngravingSize] = useState('md')
+  const [sizeScale, setSizeScale] = useState(1.0)
   const [placement, setPlacement] = useState('cc')
 
   // Image upload
@@ -394,7 +412,7 @@ export default function Customizer() {
       if (d.engravingText) setEngravingText(d.engravingText)
       if (d.selectedFont)  setSelectedFont(d.selectedFont)
       if (d.placement)     setPlacement(d.placement)
-      if (d.engravingSize) setEngravingSize(d.engravingSize)
+      if (d.sizeScale)     setSizeScale(d.sizeScale)
       showToast('הטיוטה שלך שוחזרה')
     } catch (_) {}
   }, [productId])
@@ -435,7 +453,7 @@ export default function Customizer() {
 
   const saveForLater = () => {
     localStorage.setItem(`am_draft_${productId}`, JSON.stringify({
-      engravingType, engravingText, selectedFont, placement, engravingSize,
+      engravingType, engravingText, selectedFont, placement, sizeScale,
     }))
     showToast('נשמר! ההגדרות ישמרו לביקור הבא.')
   }
@@ -456,7 +474,7 @@ export default function Customizer() {
       product, engravingText, engravingType, uploadedImgSrc,
       material: selectedMaterial, fontStyle: selectedFont,
       size: selectedSize, quantity, price: grandTotal,
-      engravingSize, placement, wantsProof, specialNotes,
+      sizeScale, placement, wantsProof, specialNotes,
     })
     navigate('/checkout')
   }
@@ -482,7 +500,6 @@ export default function Customizer() {
   const material   = materials.find(m => m.id === selectedMaterial) || materials[0]
   const font       = FONT_DEFS[selectedFont]
   const size       = sizes.find(s => s.id === selectedSize) || sizes[0]
-  const sizeScale  = SIZE_DEFS.find(s => s.id === engravingSize)?.scale || 1.0
   const unitPrice  = product.price + (size?.extra || 0)
   const grandTotal = unitPrice * quantity
 
@@ -726,7 +743,7 @@ export default function Customizer() {
               </SectionCard>
             )}
 
-            {/* §0N Placement & Size */}
+            {/* §0N Placement & Size Scale */}
             <SectionCard num={nums.place} title="איפה למקם?" desc="לחץ על אזור בחתיכה לקביעת המיקום.">
               <div className="flex flex-col items-center gap-4">
                 {/* Product silhouette with zone grid */}
@@ -774,79 +791,71 @@ export default function Customizer() {
 
               <Divider />
 
-              {/* Engraving size */}
+              {/* Engraving size scale */}
               <div>
-                <p className="text-sm font-medium text-[#1C1917] mb-1">גודל החריטה</p>
-                <p className="text-xs text-[#6B6560] mb-3">ביחס לשטח המוצר</p>
-                <div className="flex gap-2">
-                  {SIZE_DEFS.map(s => (
-                    <button
-                      key={s.id}
-                      onClick={() => { setEngravingSize(s.id); setPreviewApproved(false) }}
-                      className="flex-1 py-3 rounded-xl border-2 text-center transition-all"
-                      style={engravingSize === s.id
-                        ? { borderColor: '#2D6A4F', background: '#D8F3DC' }
-                        : { borderColor: '#E4DDD6', background: '#fff' }}
-                    >
-                      <span className="block font-bold text-sm text-[#1C1917]">{s.label}</span>
-                      <span className="block text-[10px] text-[#6B6560] mt-0.5">{s.desc}</span>
-                    </button>
-                  ))}
+                <div className="flex justify-between items-baseline mb-2">
+                  <p className="text-sm font-medium text-[#1C1917]">גודל החריטה</p>
+                  <p className="text-xs font-bold text-[#2D6A4F]">{(sizeScale * 100).toFixed(0)}%</p>
+                </div>
+                <input
+                  type="range"
+                  min="0.3"
+                  max="3.0"
+                  step="0.05"
+                  value={sizeScale}
+                  onChange={e => { setSizeScale(parseFloat(e.target.value)); setPreviewApproved(false) }}
+                  className="w-full h-2 bg-[#E4DDD6] rounded-lg appearance-none cursor-pointer"
+                  style={{ accentColor: '#2D6A4F' }}
+                />
+                <div className="flex justify-between mt-1 px-1">
+                  <span className="text-[10px] text-[#6B6560]">קטן מאוד</span>
+                  <span className="text-[10px] text-[#6B6560]">ענק</span>
                 </div>
               </div>
             </SectionCard>
 
             {/* §0N Material */}
             <SectionCard num={nums.material} title="חומר" desc="לכל חומר מאפיינים ייחודיים של חריטה.">
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <div className="grid grid-cols-2 gap-3">
                 {materials.map(m => (
                   <button
                     key={m.id}
-                    onClick={() => setSelectedMaterial(m.id)}
-                    className="flex items-center gap-3 p-3.5 rounded-xl border-2 text-sm font-medium transition-all text-right"
+                    onClick={() => { setSelectedMaterial(m.id); setPreviewApproved(false) }}
+                    className="flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-right"
                     style={selectedMaterial === m.id
                       ? { borderColor: '#2D6A4F', background: '#D8F3DC' }
                       : { borderColor: '#E4DDD6', background: '#fff' }}
                   >
-                    <span
-                      className="w-5 h-5 rounded-md flex-shrink-0 shadow-sm border border-white/30"
+                    <div
+                      className="w-8 h-8 rounded-full shadow-sm border border-[#E4DDD6] flex-shrink-0"
                       style={{ background: m.bg }}
                     />
-                    <span className="text-[#1C1917] flex-1 text-right">{m.label}</span>
-                    {selectedMaterial === m.id && (
-                      <span className="text-sm" style={{ color: '#2D6A4F' }}>✓</span>
-                    )}
+                    <span className="font-semibold text-[#1C1917] text-sm">{m.label}</span>
                   </button>
                 ))}
               </div>
-
-              {/* Product size (if multiple) */}
-              {sizes.length > 1 && (
-                <>
-                  <Divider />
-                  <div>
-                    <p className="text-sm font-medium text-[#1C1917] mb-3">גודל מוצר</p>
-                    <div className="flex gap-2 flex-wrap">
-                      {sizes.map(s => (
-                        <button
-                          key={s.id}
-                          onClick={() => setSelectedSize(s.id)}
-                          className="flex-1 min-w-[72px] py-2.5 rounded-xl border-2 text-sm font-semibold transition-all"
-                          style={selectedSize === s.id
-                            ? { borderColor: '#2D6A4F', background: '#D8F3DC', color: '#1C1917' }
-                            : { borderColor: '#E4DDD6', background: '#fff', color: '#1C1917' }}
-                        >
-                          {s.label}
-                          {s.extra > 0 && (
-                            <span className="block text-xs font-normal opacity-70">+₪{s.extra}</span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                </>
-              )}
             </SectionCard>
+
+            {/* Product size (if multiple) */}
+            {sizes.length > 1 && (
+              <SectionCard num="—" title="גודל המוצר" desc="בחר את גודל הפריט עצמו.">
+                <div className="grid grid-cols-2 gap-3">
+                  {sizes.map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => setSelectedSize(s.id)}
+                      className="py-3 px-4 rounded-xl border-2 transition-all flex flex-col items-center"
+                      style={selectedSize === s.id
+                        ? { borderColor: '#2D6A4F', background: '#D8F3DC' }
+                        : { borderColor: '#E4DDD6', background: '#fff' }}
+                    >
+                      <span className="font-bold text-[#1C1917] text-sm">{s.label}</span>
+                      {s.extra > 0 && <span className="text-xs text-[#6B6560]">+₪{s.extra}</span>}
+                    </button>
+                  ))}
+                </div>
+              </SectionCard>
+            )}
 
             {/* §0N Proof */}
             <SectionCard num={nums.proof} title="האם תרצה הדמיה לפני הייצור?" desc="נשלח לך רנדר לפני שנפעיל את הלייזר.">
@@ -873,62 +882,35 @@ export default function Customizer() {
             </SectionCard>
 
             {/* §0N Special notes */}
-            <SectionCard num={nums.notes} title="משהו נוסף שכדאי לדעת?">
-              <button
-                onClick={() => setNotesOpen(o => !o)}
-                className="flex items-center justify-between w-full text-sm font-medium text-[#6B6560] py-1 transition-colors hover:text-[#1C1917]"
-              >
-                <span>הוסף הנחיות מיוחדות (אופציונלי)</span>
-                <span
-                  className="material-symbols-outlined text-sm transition-transform"
-                  style={{ transform: notesOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+            <SectionCard num={nums.notes} title="בקשות מיוחדות" desc="הערות לצוות (לא יחורט).">
+              {!notesOpen ? (
+                <button
+                  onClick={() => setNotesOpen(true)}
+                  className="w-full py-3.5 border-2 border-dashed border-[#E4DDD6] text-[#6B6560] font-medium text-sm rounded-xl hover:border-[#2D6A4F] hover:text-[#2D6A4F] transition-colors"
                 >
-                  expand_more
-                </span>
-              </button>
-
-              {notesOpen && (
-                <div className="mt-3">
-                  <textarea
-                    value={specialNotes}
-                    onChange={e => setSpecialNotes(e.target.value)}
-                    rows={3}
-                    className="w-full border-[1.5px] border-[#E4DDD6] rounded-xl px-4 py-3 text-sm text-[#1C1917] bg-white outline-none transition-colors resize-y focus:border-[#2D6A4F]"
-                    placeholder="לדוגמה: ראי את הלוגו, יישר לשמאל, הימנע מאזור הסיכה בצד ימין…"
-                  />
-                  <p className="text-xs text-[#6B6560] mt-1.5">
-                    אנחנו קוראים כל הערה בקפידה. אם משהו לא אפשרי, ניצור קשר לפני שנתחיל.
-                  </p>
-                </div>
+                  + הוסף הערה להזמנה
+                </button>
+              ) : (
+                <textarea
+                  value={specialNotes}
+                  onChange={e => setSpecialNotes(e.target.value)}
+                  placeholder="למשל: למקם את הטקסט בדיוק מתחת לידית..."
+                  rows={3}
+                  className="w-full border-[1.5px] border-[#E4DDD6] rounded-xl px-4 py-3 text-sm text-[#1C1917] bg-white outline-none transition-colors focus:border-[#2D6A4F]"
+                />
               )}
             </SectionCard>
-
-            {/* Mobile-only preview */}
-            <div className="lg:hidden bg-white border border-[#E4DDD6] rounded-2xl p-5 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-semibold text-[#1C1917]">תצוגה מקדימה חיה</p>
-                <span
-                  className="text-[10px] font-medium px-2 py-0.5 rounded-full"
-                  style={{ color: '#2D6A4F', background: '#D8F3DC' }}
-                >
-                  משוערת
-                </span>
-              </div>
-              <LivePreview {...previewProps} compact />
-            </div>
-
           </div>{/* /form column */}
 
-          {/* ══════════ PREVIEW + SUMMARY COLUMN (desktop) ══════════ */}
-          <div className="hidden lg:flex flex-col gap-4 sticky top-20">
+          {/* ══════════ PREVIEW COLUMN (Sticky) ══════════ */}
+          <div className="lg:sticky top-24 space-y-6">
 
-            {/* Live preview card */}
-            <div className="bg-white border border-[#E4DDD6] rounded-2xl p-5 shadow-sm">
+            <div className="bg-white border border-[#E4DDD6] rounded-2xl p-4 shadow-sm">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-sm font-semibold text-[#1C1917]">תצוגה מקדימה חיה</p>
+                <h3 className="font-bold text-[#1C1917]">תצוגה מקדימה</h3>
                 <span
-                  className="text-[10px] font-medium px-2 py-0.5 rounded-full"
-                  style={{ color: '#2D6A4F', background: '#D8F3DC' }}
+                  className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest"
+                  style={{ background: '#F7F5F2', color: '#6B6560' }}
                 >
                   משוערת
                 </span>
