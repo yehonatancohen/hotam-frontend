@@ -394,7 +394,6 @@ export default function Checkout() {
                     </div>
                     {promoError && <p className="text-error text-xs mt-1.5">{promoError}</p>}
                     {discount > 0 && <p className="text-green-600 text-xs mt-1.5 font-bold">✓ קופון הוחל בהצלחה!</p>}
-                    <p className="text-on-surface-variant/50 text-xs mt-1">נסה: HATAM10 / FIRST20 / LASER50</p>
                   </div>
                 </div>
 
