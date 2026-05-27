@@ -1264,11 +1264,12 @@ export default function Customizer() {
                 {[
                   ['מוצר',     product.name_he],
                   ['חריטה',    typeLabels[engravingType]],
-                  ['גופן',     showTextSection ? FONT_DEFS[selectedFont]?.label : '—'],
-                  ['חומר',     material?.label || '—'],
-                  ['צבע',      selectedColor || '—'],
-                  ['זמן ייצור', wantsProof ? '4–6 ימי עסקים' : '3–5 ימי עסקים'],
-                ].map(([k, v]) => (
+                  showTextSection && ['גופן', FONT_DEFS[selectedFont]?.label],
+                  (materials.length > 0 && customOptions.length === 0) && ['חומר', material?.label],
+                  colors.length > 0 && ['צבע', selectedColor],
+                  ...Object.entries(selectedOptions).map(([k, v]) => [k, v?.label || v]),
+                  ['זמן ייצור', product.production_time || '5–7 ימי עסקים'],
+                ].filter(Boolean).map(([k, v]) => (
                   <div key={k} className="flex justify-between items-baseline gap-2">
                     <span className="text-[#6B6560] flex-shrink-0">{k}</span>
                     <span className="font-medium text-[#1C1917] text-right">{v}</span>

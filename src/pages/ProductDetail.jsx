@@ -142,7 +142,19 @@ export default function ProductDetail() {
     )
   }
 
-  const features = FEATURES_BY_CATEGORY[product.category] || FEATURES_BY_CATEGORY.mixed
+  const isMetalProduct = product?.materials && (
+    product.materials.includes('ברזל') || 
+    product.materials.includes('מתכת') || 
+    product.materials.includes('metal') || 
+    product.materials.includes('steel')
+  )
+
+  let features = FEATURES_BY_CATEGORY[product.category] || FEATURES_BY_CATEGORY.mixed
+  if (product.features) {
+    features = product.features.split(',').map(f => f.trim()).filter(Boolean)
+  } else if (product.category === 'accessories' && isMetalProduct) {
+    features = ['מתכת עמידה ואיכותית', 'חריטה מונולית', 'מתנה בקופסת מתנה', 'כתב יד / מודרני / קלאסי']
+  }
 
   return (
     <div>
@@ -212,7 +224,7 @@ export default function ProductDetail() {
                 </div>
                 <div className="flex items-center gap-1.5 text-on-surface-variant text-sm">
                   <span className="material-symbols-outlined text-base">local_shipping</span>
-                  5–7 ימי עסקים
+                  {product.production_time || '5–7 ימי עסקים'}
                 </div>
               </div>
               <button

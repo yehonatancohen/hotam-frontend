@@ -132,12 +132,37 @@ export default function Checkout() {
   const [waitlistEmail, setWaitlistEmail] = useState('')
   const [waitlistSuccess, setWaitlistSuccess] = useState(false)
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
     if (!cartItem) { navigate('/customizer'); return }
-    setOutOfStock(true)
+    setSubmitting(true)
+    try {
+      const orderPayload = {
+        customer_name: form.customer_name,
+        customer_email: form.customer_email,
+        customer_phone: form.customer_phone,
+        engraving_text: cartItem.engravingText,
+        font_style: cartItem.fontStyle || 'modern',
+        material: cartItem.material || 'default',
+        product_id: cartItem.product.id,
+        product_name: cartItem.product.name_he,
+        product_price: cartItem.price,
+        quantity: cartItem.quantity || 1,
+        payment_method: paymentMethod,
+        promo_code: promoCode,
+        discount: discount,
+        notes: `הערות מיוחדות: ${cartItem.specialNotes || 'אין'}. מאפיינים שנבחרו: ${JSON.stringify(cartItem.customOptions || {})}`,
+        status: 'out_of_stock'
+      }
+      await axios.post(`${API}/orders`, orderPayload)
+      setOutOfStock(true)
+    } catch (err) {
+      alert('אירעה שגיאה בבניית ההזמנה. אנא נסה שנית.')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   const handleWaitlist = async (e) => {
