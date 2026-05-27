@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useCart } from '../context/CartContext'
@@ -95,9 +95,21 @@ export default function Checkout() {
   const [submitting, setSubmitting] = useState(false)
   const [errors, setErrors] = useState({})
 
+  const [shippingFee, setShippingFee] = useState(25)
+
+  useEffect(() => {
+    axios.get(`${API}/settings`)
+      .then(res => {
+        if (res.data && res.data.success && res.data.data && res.data.data.shipping_fee) {
+          setShippingFee(Number(res.data.data.shipping_fee))
+        }
+      })
+      .catch(err => console.error('Failed to load settings', err))
+  }, [])
+
   // Pricing
   const subtotal = cartItem?.price || 0
-  const shipping = subtotal >= 300 ? 0 : 25
+  const shipping = subtotal >= 300 ? 0 : shippingFee
   const total = subtotal + shipping - discount
 
   const { url: productImg, zone: designZone } = cartItem ? getPreviewImage(cartItem.product) : { url: null, zone: null }
@@ -164,6 +176,7 @@ export default function Checkout() {
         text_alignment: cartItem.textAlignment || 'center',
         engraving_type: cartItem.engravingType || 'text',
         uploaded_img_data: cartItem.uploadedImgSrc || null,
+        shipping: shipping,
       }
       await axios.post(`${API}/orders`, orderPayload)
       setOutOfStock(true)
@@ -407,7 +420,7 @@ export default function Checkout() {
                         <span className="font-headline text-xl font-extrabold">סה&quot;כ לתשלום</span>
                         <div className="text-right">
                           <span className="text-3xl font-headline font-black text-primary">₪{total.toFixed(2)}</span>
-                          <p className="text-[10px] text-on-surface-variant">כולל מע&quot;מ ומשלוח</p>
+                          <p className="text-[10px] text-on-surface-variant">כולל דמי משלוח</p>
                         </div>
                       </div>
                     </div>

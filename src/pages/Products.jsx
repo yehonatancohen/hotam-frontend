@@ -167,7 +167,7 @@ function ProductCard({ product }) {
         <img
           src={src}
           alt={product.name_he}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-contain bg-[#FAF8F5] group-hover:scale-105 transition-transform duration-500"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
         <div className="absolute bottom-3 right-3 left-3 flex justify-end opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
@@ -189,7 +189,10 @@ function ProductCard({ product }) {
           {product.description_he}
         </p>
         <div className="mt-4 flex items-center justify-between">
-          <span className="font-headline font-black text-primary text-xl">₪{product.price}</span>
+          <span className="font-headline font-black text-primary text-xl flex flex-col items-start leading-none">
+            <span>₪{product.price}</span>
+            <span className="text-[10px] text-on-surface-variant font-normal mt-0.5">לפני משלוח</span>
+          </span>
           <span className="material-symbols-outlined text-on-surface-variant/50 group-hover:text-primary transition-colors">arrow_back</span>
         </div>
       </div>

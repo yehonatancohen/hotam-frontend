@@ -1,20 +1,29 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
+import axios from 'axios'
+
+const API = import.meta.env.VITE_API_URL
 
 export default function ComingSoon() {
   const [email, setEmail] = useState('')
   const [submitted, setSubmitted] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     if (!email.trim()) return
     setLoading(true)
-    // Simulate submission — wire to a real mailing list when ready
-    setTimeout(() => {
+    setError('')
+    try {
+      await axios.post(`${API}/waitlist`, { email: email.trim() })
       setSubmitted(true)
+    } catch (err) {
+      console.error(err)
+      setError('אירעה שגיאה ברישום. אנא נסה שנית.')
+    } finally {
       setLoading(false)
-    }, 900)
+    }
   }
 
   return (
@@ -48,28 +57,31 @@ export default function ComingSoon() {
             <p className="text-on-surface-variant text-sm">נשלח לך עדכון כשהמוצרים יחזרו. תודה שאתה איתנו.</p>
           </div>
         ) : (
-          <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 w-full" dir="rtl">
-            <input
-              type="email"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              placeholder="כתובת האימייל שלך"
-              required
-              className="flex-1 bg-surface-container-lowest border-2 border-outline-variant focus:border-primary focus:outline-none rounded-xl px-5 py-3.5 text-on-surface text-base placeholder:text-on-surface-variant/40 transition-colors"
-            />
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-primary px-8 py-3.5 text-base whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {loading ? (
-                <span className="flex items-center gap-2 justify-center">
-                  <span className="animate-spin material-symbols-outlined text-base">autorenew</span>
-                  שולח...
-                </span>
-              ) : 'הודיעו לי'}
-            </button>
-          </form>
+          <div className="space-y-3">
+            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 w-full" dir="rtl">
+              <input
+                type="email"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="כתובת האימייל שלך"
+                required
+                className="flex-1 bg-surface-container-lowest border-2 border-outline-variant focus:border-primary focus:outline-none rounded-xl px-5 py-3.5 text-on-surface text-base placeholder:text-on-surface-variant/40 transition-colors"
+              />
+              <button
+                type="submit"
+                disabled={loading}
+                className="btn-primary px-8 py-3.5 text-base whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <span className="flex items-center gap-2 justify-center">
+                    <span className="animate-spin material-symbols-outlined text-base">autorenew</span>
+                    שולח...
+                  </span>
+                ) : 'הודיעו לי'}
+              </button>
+            </form>
+            {error && <p className="text-[#DC2626] text-xs font-semibold mt-1">{error}</p>}
+          </div>
         )}
 
         {/* Divider */}
