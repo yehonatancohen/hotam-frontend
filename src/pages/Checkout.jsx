@@ -154,7 +154,16 @@ export default function Checkout() {
         promo_code: promoCode,
         discount: discount,
         notes: `הערות מיוחדות: ${cartItem.specialNotes || 'אין'}. מאפיינים שנבחרו: ${JSON.stringify(cartItem.customOptions || {})}`,
-        status: 'out_of_stock'
+        status: 'out_of_stock',
+        placement: cartItem.placement,
+        placement_logo: cartItem.placementLogo,
+        size_scale: cartItem.sizeScale || 1.0,
+        size_scale_logo: cartItem.sizeScaleLogo || 1.0,
+        rotation_text: cartItem.rotationText || 0,
+        rotation_logo: cartItem.rotationLogo || 0,
+        text_alignment: cartItem.textAlignment || 'center',
+        engraving_type: cartItem.engravingType || 'text',
+        uploaded_img_data: cartItem.uploadedImgSrc || null,
       }
       await axios.post(`${API}/orders`, orderPayload)
       setOutOfStock(true)
