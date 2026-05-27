@@ -334,10 +334,15 @@ export default function Checkout() {
                       engravingText2=""
                       material={materials.find(m => m.id === cartItem.material)}
                       font={FONT_DEFS[cartItem.fontStyle] || FONT_DEFS['modern']}
-                      sizeScale={SIZE_DEFS.find(s => s.id === cartItem.engravingSize)?.scale || 1.0}
-                      placement={cartItem.placement || 'cc'}
+                      sizeScale={cartItem.sizeScale || 1.0}
+                      placement={cartItem.placement || 'custom_50_50_50_30'}
                       uploadedImgSrc={cartItem.uploadedImgSrc}
                       compact={true}
+                      placementLogo={cartItem.placementLogo || 'custom_50_70_50_30'}
+                      sizeScaleLogo={cartItem.sizeScaleLogo || 1.0}
+                      rotationText={cartItem.rotationText || 0}
+                      rotationLogo={cartItem.rotationLogo || 0}
+                      textAlignment={cartItem.textAlignment || 'center'}
                     />
                   </div>
 

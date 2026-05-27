@@ -473,7 +473,7 @@ function ProductCard({ product, className = '', large, wide, popular }) {
 
   if (wide) {
     return (
-      <Link to={`/products/${product.id}`} className={`${className} flex flex-col md:flex-row bg-surface-container rounded-xl overflow-hidden group border border-outline-variant/10 relative`}>
+      <Link to={`/products/${product.id}`} className={`${className} flex flex-col md:flex-row bg-white rounded-xl overflow-hidden group border border-outline-variant/10 relative shadow-sm hover:shadow-md transition-all`}>
         {popular && (
           <div className="absolute top-4 right-4 z-10 bg-secondary text-on-secondary text-xs font-bold px-3 py-1 rounded-full">
             הכי פופולרי
@@ -493,7 +493,10 @@ function ProductCard({ product, className = '', large, wide, popular }) {
             <span className="btn-primary px-8 py-3 text-base">בחר מוצר</span>
             <div className="text-right">
               <div className="text-xs text-on-surface-variant">החל מ</div>
-              <span className="text-primary font-headline font-black text-2xl">₪{product.price}</span>
+              <span className="text-primary font-headline font-black text-2xl flex flex-col items-end leading-none">
+                <span>₪{product.price}</span>
+                <span className="text-[10px] text-on-surface-variant font-normal mt-0.5">לפני משלוח</span>
+              </span>
             </div>
           </div>
         </div>
@@ -509,7 +512,7 @@ function ProductCard({ product, className = '', large, wide, popular }) {
         </div>
       )}
       <div className={`relative overflow-hidden ${large ? 'aspect-video' : 'aspect-square'}`}>
-        <img src={src} alt={product.name_he} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
+        <img src={src} alt={product.name_he} loading="lazy" className="w-full h-full object-contain bg-[#FAF8F5] group-hover:scale-105 transition-transform duration-700" />
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
       </div>
       <div className="p-7 flex-1 flex flex-col">
@@ -519,7 +522,10 @@ function ProductCard({ product, className = '', large, wide, popular }) {
           <span className="btn-primary px-5 py-2 text-sm">בחר מוצר</span>
           <div className="text-right">
             <div className="text-xs text-on-surface-variant">החל מ</div>
-            <span className="text-primary font-headline font-bold text-xl">₪{product.price}</span>
+            <span className="text-primary font-headline font-bold text-xl flex flex-col items-end leading-none">
+              <span>₪{product.price}</span>
+              <span className="text-[9px] text-on-surface-variant font-normal mt-0.5">לפני משלוח</span>
+            </span>
           </div>
         </div>
       </div>

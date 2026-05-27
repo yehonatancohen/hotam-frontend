@@ -176,111 +176,276 @@ export function LivePreview({
   material, font, sizeScale, placement,
   uploadedImgSrc, compact = false,
   previewApproved, onApprove, onAdjust,
+  onCustomPlacementChange,
+  onSizeScaleChange,
+  interactive = false,
+  placementLogo,
+  sizeScaleLogo,
+  rotationText = 0,
+  rotationLogo = 0,
+  textAlignment = 'center',
+  onCustomPlacementChangeLogo,
+  onSizeScaleChangeLogo,
+  onRotationTextChange,
+  onRotationLogoChange,
 }) {
   const cfg = CATEGORY_CONFIG[product.category] || CATEGORY_CONFIG.mixed
   const previewText = engravingText || cfg.hint
-  const zone = ZONES.find(z => z.id === placement) || ZONES[4]
+  
+  // Parse text placement coordinates
+  const parts = typeof placement === 'string' && placement.startsWith('custom_') ? placement.split('_') : []
+  const customX = parseFloat(parts[1]) || 50
+  const customY = parseFloat(parts[2]) || 50
+  const customW = parseFloat(parts[3]) || 50
+  const customH = parseFloat(parts[4]) || 30
 
-  const placementFlex = {
-    tl: 'items-start justify-start', tc: 'items-start justify-center', tr: 'items-start justify-end',
-    cl: 'items-center justify-start', cc: 'items-center justify-center', cr: 'items-center justify-end',
-    bl: 'items-end justify-start', bc: 'items-end justify-center', br: 'items-end justify-end',
-  }[placement] || 'items-center justify-center'
+  // Parse logo placement coordinates
+  const logoParts = typeof placementLogo === 'string' && placementLogo.startsWith('custom_') ? placementLogo.split('_') : []
+  const customLogoX = parseFloat(logoParts[1]) || 50
+  const customLogoY = parseFloat(logoParts[2]) || 70
+  const customLogoW = parseFloat(logoParts[3]) || 50
+  const customLogoH = parseFloat(logoParts[4]) || 30
 
-  const overlayStyle = designZone
-    ? {
-        position: 'absolute',
-        left: `${designZone.x}%`, top: `${designZone.y}%`,
-        width: `${designZone.width}%`, height: `${designZone.height}%`,
-        transform: designZone.rotation ? `rotate(${designZone.rotation}deg)` : undefined,
-        direction: 'ltr'
-      }
-    : {
-        position: 'absolute',
-        left: `${zone.x * 100}%`, top: `${zone.y * 100}%`,
-        transform: 'translate(-50%, -50%)',
-        width: '65%', height: '65%',
-        direction: 'ltr'
-      }
+  const placementFlex = 'items-center justify-center'
+
+  const overlayStyle = {
+    position: 'absolute',
+    left: `${customX}%`, top: `${customY}%`,
+    width: 'max-content',
+    maxWidth: '90%',
+    height: 'auto',
+    transform: `translate(-50%, -50%) rotate(${rotationText}deg)`,
+    direction: 'ltr',
+    border: compact || !interactive || previewApproved ? 'none' : '1.5px dashed #2D6A4F',
+    background: compact || !interactive || previewApproved ? 'transparent' : 'rgba(45,106,79,0.06)',
+    cursor: compact || !interactive || previewApproved ? 'default' : 'move',
+    touchAction: 'none',
+  }
+
+  const overlayStyleLogo = {
+    position: 'absolute',
+    left: `${customLogoX}%`, top: `${customLogoY}%`,
+    width: '28cqw',
+    height: '28cqw',
+    transform: `translate(-50%, -50%) rotate(${rotationLogo}deg) scale(${sizeScaleLogo})`,
+    direction: 'ltr',
+    border: compact || !interactive || previewApproved ? 'none' : '1.5px dashed #2D6A4F',
+    background: compact || !interactive || previewApproved ? 'transparent' : 'rgba(45,106,79,0.06)',
+    cursor: compact || !interactive || previewApproved ? 'default' : 'move',
+    touchAction: 'none',
+  }
 
   const textStyle = {
     ...font.style,
     color: material?.textColor || '#fff',
     mixBlendMode: material?.blendMode || 'screen',
     filter: 'contrast(1.2)',
-    fontSize: compact ? `calc(1rem * ${sizeScale})` : `calc(2rem * ${sizeScale})`,
+    fontSize: `calc(7.2cqw * ${sizeScale})`,
     lineHeight: 1.3,
     wordBreak: 'break-word',
-    textAlign: {
-      tl: 'left', cl: 'left', bl: 'left',
-      tc: 'center', cc: 'center', bc: 'center',
-      tr: 'right', cr: 'right', br: 'right'
-    }[placement] || 'center',
+    textAlign: textAlignment,
     whiteSpace: 'pre-wrap',
     direction: 'rtl' // Keep the text itself reading RTL
+  }
+
+  const needsZoom = product?.id === 'prod_4' || product?.name_he?.includes('תחתיות') || product?.name_he?.includes('בלוק')
+  const zoomStyle = needsZoom ? { transform: 'scale(1.35)', transformOrigin: 'center center' } : {}
+
+  const containerRef = useRef(null)
+
+  const handleStartDrag = (target, type, e) => {
+    if (compact || !interactive || previewApproved || !onCustomPlacementChange) return
+    e.preventDefault()
+    e.stopPropagation()
+
+    const container = containerRef.current
+    if (!container) return
+    const rect = container.getBoundingClientRect()
+
+    const isTouch = e.type === 'touchstart'
+    const startCX = isTouch ? e.touches[0].clientX : e.clientX
+    const startCY = isTouch ? e.touches[0].clientY : e.clientY
+
+    const startX = target === 'text' ? customX : customLogoX
+    const startY = target === 'text' ? customY : customLogoY
+    const startScale = target === 'text' ? sizeScale : sizeScaleLogo
+
+    const handleDragMove = (moveEvt) => {
+      const currentCX = isTouch ? moveEvt.touches[0].clientX : moveEvt.clientX
+      const currentCY = isTouch ? moveEvt.touches[0].clientY : moveEvt.clientY
+
+      const dx = ((currentCX - startCX) / rect.width) * 100
+      const dy = ((currentCY - startCY) / rect.height) * 100
+
+      if (type === 'move') {
+        const nextX = Math.max(5, Math.min(95, startX + dx))
+        const nextY = Math.max(5, Math.min(95, startY + dy))
+        if (target === 'text') {
+          onCustomPlacementChange(`custom_${nextX.toFixed(1)}_${nextY.toFixed(1)}_${customW.toFixed(1)}_${customH.toFixed(1)}`)
+        } else {
+          onCustomPlacementChangeLogo(`custom_${nextX.toFixed(1)}_${nextY.toFixed(1)}_${customLogoW.toFixed(1)}_${customLogoH.toFixed(1)}`)
+        }
+      } else if (type === 'resize') {
+        const scaleChange = (dx + dy) / 40
+        const nextScale = Math.max(0.3, Math.min(6.0, startScale + scaleChange))
+        if (target === 'text') {
+          if (onSizeScaleChange) onSizeScaleChange(nextScale)
+        } else {
+          if (onSizeScaleChangeLogo) onSizeScaleChangeLogo(nextScale)
+        }
+      } else if (type === 'rotate') {
+        const box = container.querySelector(target === 'text' ? '.text-overlay-box' : '.logo-overlay-box')
+        if (box) {
+          const boxRect = box.getBoundingClientRect()
+          const centerX = boxRect.left + boxRect.width / 2
+          const centerY = boxRect.top + boxRect.height / 2
+          const rad = Math.atan2(currentCY - centerY, currentCX - centerX)
+          let deg = rad * (180 / Math.PI) + 90
+          
+          if (deg > 180) deg -= 360
+          if (deg < -180) deg += 360
+
+          // Lock easily to 0, 90, 180, -90, -180
+          const snapAngles = [0, 90, 180, -90, -180]
+          for (let snap of snapAngles) {
+            if (Math.abs(deg - snap) < 8) {
+              deg = snap
+              break
+            }
+          }
+
+          if (target === 'text') {
+            if (onRotationTextChange) onRotationTextChange(Math.round(deg))
+          } else {
+            if (onRotationLogoChange) onRotationLogoChange(Math.round(deg))
+          }
+        }
+      }
+    }
+
+    const handleDragEnd = () => {
+      if (isTouch) {
+        window.removeEventListener('touchmove', handleDragMove)
+        window.removeEventListener('touchend', handleDragEnd)
+      } else {
+        window.removeEventListener('mousemove', handleDragMove)
+        window.removeEventListener('mouseup', handleDragEnd)
+      }
+    }
+
+    if (isTouch) {
+      window.addEventListener('touchmove', handleDragMove, { passive: false })
+      window.addEventListener('touchend', handleDragEnd)
+    } else {
+      window.addEventListener('mousemove', handleDragMove)
+      window.addEventListener('mouseup', handleDragEnd)
+    }
   }
 
   return (
     <div>
       <div
         className="relative rounded-xl overflow-hidden border border-[#E4DDD6]"
-        style={{ aspectRatio: '4/3' }}
+        style={{ aspectRatio: '4/3', containerType: 'inline-size' }}
       >
-        {productImg ? (
-          <>
-            <img
-              src={productImg}
-              alt={product.name_he}
-              className="absolute inset-0 w-full h-full object-cover"
-              style={{ filter: 'brightness(0.88) contrast(1.05)' }}
-            />
-            <div
-              className="absolute inset-0"
-              style={{ background: (material?.bg || '#000') + '28', mixBlendMode: 'color' }}
-            />
-          </>
-        ) : (
-          <>
-            <div className="absolute inset-0" style={{ background: material?.bg || '#2f3131' }} />
-            <div className="absolute inset-0 bg-gradient-to-tr from-black/50 via-transparent to-transparent" />
-          </>
-        )}
+        <div ref={containerRef} className="absolute inset-0 w-full h-full" style={zoomStyle}>
+          {productImg ? (
+            <>
+              <img
+                src={productImg}
+                alt={product.name_he}
+                className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none"
+                style={{ filter: 'brightness(0.88) contrast(1.05)' }}
+                draggable={false}
+              />
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{ background: (material?.bg || '#000') + '28', mixBlendMode: 'color' }}
+              />
+            </>
+          ) : (
+            <>
+              <div className="absolute inset-0 pointer-events-none" style={{ background: material?.bg || '#2f3131' }} />
+              <div className="absolute inset-0 bg-gradient-to-tr from-black/50 via-transparent to-transparent pointer-events-none" />
+            </>
+          )}
 
-        {/* Engraving overlay */}
-        {engravingType !== 'logo' && (
-          <div className={`pointer-events-none flex ${placementFlex} p-1`} style={overlayStyle}>
-            <div style={{ ...textStyle, maxWidth: '100%' }}>
-              {previewText}
-              {engravingText2 && (
-                <span className="block" style={{ fontSize: `calc(0.7em)`, marginTop: '0.3em' }}>
-                  {engravingText2}
-                </span>
+          {/* Engraving overlay */}
+          {engravingType !== 'logo' && (
+            <div 
+              className={`flex ${placementFlex} p-1 select-none text-overlay-box`} 
+              style={overlayStyle}
+              onMouseDown={e => handleStartDrag('text', 'move', e)}
+              onTouchStart={e => handleStartDrag('text', 'move', e)}
+            >
+              <div style={{ ...textStyle, maxWidth: '100%' }}>
+                {previewText}
+                {engravingText2 && (
+                  <span className="block" style={{ fontSize: `calc(0.7em)`, marginTop: '0.3em' }}>
+                    {engravingText2}
+                  </span>
+                )}
+              </div>
+              {!compact && interactive && !previewApproved && (
+                <>
+                  <div
+                    className="absolute w-4.5 h-4.5 bg-white border-2 border-[#2D6A4F] rounded-full cursor-se-resize z-30"
+                    style={{ bottom: '-9px', right: '-9px' }}
+                    onMouseDown={e => handleStartDrag('text', 'resize', e)}
+                    onTouchStart={e => handleStartDrag('text', 'resize', e)}
+                  />
+                  <div
+                    className="absolute w-5 h-5 bg-white border-2 border-[#2D6A4F] rounded-full cursor-alias z-30 flex items-center justify-center shadow-sm"
+                    style={{ top: '-24px', left: '50%', transform: 'translateX(-50%)' }}
+                    onMouseDown={e => handleStartDrag('text', 'rotate', e)}
+                    onTouchStart={e => handleStartDrag('text', 'rotate', e)}
+                  >
+                    <span className="material-symbols-outlined text-[10px] text-[#2D6A4F] font-bold select-none pointer-events-none">rotate_right</span>
+                  </div>
+                </>
               )}
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Uploaded image overlay */}
-        {engravingType !== 'text' && uploadedImgSrc && (
-          <div className={`pointer-events-none flex ${placementFlex} p-1`} style={overlayStyle}>
-            <img
-              src={uploadedImgSrc}
-              alt="לוגו"
-              style={{
-                maxWidth: '100%', maxHeight: '100%',
-                opacity: 0.85,
-                mixBlendMode: material?.blendMode || 'screen',
-                objectFit: 'contain',
-                transform: `scale(${sizeScale})`,
-                transformOrigin: {
-                  tl: 'top right', tc: 'top center', tr: 'top left',
-                  cl: 'center right', cc: 'center center', cr: 'center left',
-                  bl: 'bottom right', bc: 'bottom center', br: 'bottom left'
-                }[placement] || 'center',
-              }}
-            />
-          </div>
-        )}
+          {/* Uploaded image overlay */}
+          {engravingType !== 'text' && uploadedImgSrc && (
+            <div 
+              className={`flex ${placementFlex} p-1 select-none logo-overlay-box`} 
+              style={overlayStyleLogo}
+              onMouseDown={e => handleStartDrag('logo', 'move', e)}
+              onTouchStart={e => handleStartDrag('logo', 'move', e)}
+            >
+              <img
+                src={uploadedImgSrc}
+                alt="לוגו"
+                className="w-full h-full object-contain pointer-events-none select-none"
+                style={{
+                  opacity: 0.85,
+                  mixBlendMode: material?.blendMode || 'screen',
+                }}
+                draggable={false}
+              />
+              {!compact && interactive && !previewApproved && (
+                <>
+                  <div
+                    className="absolute w-4.5 h-4.5 bg-white border-2 border-[#2D6A4F] rounded-full cursor-se-resize z-30"
+                    style={{ bottom: '-9px', right: '-9px' }}
+                    onMouseDown={e => handleStartDrag('logo', 'resize', e)}
+                    onTouchStart={e => handleStartDrag('logo', 'resize', e)}
+                  />
+                  <div
+                    className="absolute w-5 h-5 bg-white border-2 border-[#2D6A4F] rounded-full cursor-alias z-30 flex items-center justify-center shadow-sm"
+                    style={{ top: '-24px', left: '50%', transform: 'translateX(-50%)' }}
+                    onMouseDown={e => handleStartDrag('logo', 'rotate', e)}
+                    onTouchStart={e => handleStartDrag('logo', 'rotate', e)}
+                  >
+                    <span className="material-symbols-outlined text-[10px] text-[#2D6A4F] font-bold select-none pointer-events-none">rotate_right</span>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </div>
 
         {/* Live indicator */}
         <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-black/30 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/20">
@@ -294,15 +459,24 @@ export function LivePreview({
         </div>
       </div>
 
-      {!compact && (
+      {!compact && interactive && (
         <>
           <p className="text-[11px] text-[#6B6560] text-center mt-2 italic">
             התצוגה משוערת. החריטה הסופית עשויה להשתנות מעט בהתאם לגרגר החומר.
           </p>
           <div className="flex gap-2 mt-3">
             {previewApproved ? (
-              <div className="flex-1 py-2.5 text-center text-sm font-medium text-[#2D6A4F] bg-[#D8F3DC] border border-[#2D6A4F] rounded-xl">
-                ✓ התצוגה אושרה — מוכן להוספה לסל
+              <div className="flex-1 flex gap-2">
+                <div className="flex-1 py-2.5 text-center text-xs font-semibold text-[#2D6A4F] bg-[#D8F3DC] border border-[#2D6A4F] rounded-xl select-none flex items-center justify-center">
+                  ✓ התצוגה אושרה — מוכן להוספה לסל
+                </div>
+                <button
+                  onClick={onAdjust}
+                  type="button"
+                  className="px-4 py-2.5 text-xs font-semibold text-[#2D6A4F] bg-white border-2 border-[#2D6A4F] rounded-xl hover:bg-[#D8F3DC] transition-all shrink-0"
+                >
+                  ערוך
+                </button>
               </div>
             ) : (
               <>
@@ -345,6 +519,10 @@ export default function Customizer() {
   const [notFound, setNotFound] = useState(false)
   const [materials, setMaterials] = useState([])
   const [sizes, setSizes] = useState([])
+  const [colors, setColors] = useState([])
+  const [selectedColor, setSelectedColor] = useState(null)
+  const [customOptions, setCustomOptions] = useState([])
+  const [selectedOptions, setSelectedOptions] = useState({})
 
   // Engraving
   const [engravingType, setEngravingType] = useState('text')
@@ -357,7 +535,12 @@ export default function Customizer() {
   const [selectedSize, setSelectedSize] = useState(null)
   const [quantity, setQuantity] = useState(1)
   const [sizeScale, setSizeScale] = useState(1.0)
-  const [placement, setPlacement] = useState('cc')
+  const [placement, setPlacement] = useState('custom_50_50_50_30')
+  const [placementLogo, setPlacementLogo] = useState('custom_50_70_50_30')
+  const [sizeScaleLogo, setSizeScaleLogo] = useState(1.0)
+  const [rotationText, setRotationText] = useState(0)
+  const [rotationLogo, setRotationLogo] = useState(0)
+  const [textAlignment, setTextAlignment] = useState('center')
 
   // Image upload
   const [uploadedFile, setUploadedFile] = useState(null)
@@ -380,56 +563,94 @@ export default function Customizer() {
       .then(r => {
         const p = r.data.data
         setProduct(p)
+
+        // Initialize custom coordinates placement based on product designZone if available
+        const { zone: designZone } = getPreviewImage(p)
+        let defaultPlacement = 'custom_50_30_50_30'
+        let defaultPlacementLogo = 'custom_50_70_50_30'
+        if (designZone) {
+          const centerX = designZone.x + designZone.width / 2
+          const centerYText = designZone.y + designZone.height * 0.35
+          const centerYLogo = designZone.y + designZone.height * 0.65
+          const width = designZone.width
+          const height = designZone.height
+          defaultPlacement = `custom_${centerX.toFixed(1)}_${centerYText.toFixed(1)}_${width.toFixed(1)}_${(height * 0.4).toFixed(1)}`
+          defaultPlacementLogo = `custom_${centerX.toFixed(1)}_${centerYLogo.toFixed(1)}_${width.toFixed(1)}_${(height * 0.4).toFixed(1)}`
+        }
+
+        // Check localStorage for saved draft first
+        try {
+          const draft = JSON.parse(localStorage.getItem(`am_draft_${productId}`))
+          if (draft) {
+            if (draft.placement) defaultPlacement = draft.placement
+            if (draft.placementLogo) defaultPlacementLogo = draft.placementLogo
+            if (draft.sizeScale) setSizeScale(draft.sizeScale)
+            if (draft.sizeScaleLogo) setSizeScaleLogo(draft.sizeScaleLogo)
+            if (draft.rotationText) setRotationText(draft.rotationText)
+            if (draft.rotationLogo) setRotationLogo(draft.rotationLogo)
+            if (draft.textAlignment) setTextAlignment(draft.textAlignment)
+            if (draft.engravingType) setEngravingType(draft.engravingType)
+            if (draft.engravingText) setEngravingText(draft.engravingText)
+            if (draft.selectedFont) setSelectedFont(draft.selectedFont)
+            showToast('הטיוטה שלך שוחזרה')
+          }
+        } catch (_) {}
+
+        setPlacement(defaultPlacement)
+        setPlacementLogo(defaultPlacementLogo)
         const cfg = CATEGORY_CONFIG[p.category] || CATEGORY_CONFIG.mixed
 
-        let mats = cfg.materials
-        if (p.available_materials) {
-          const avail = p.available_materials.split(',').map(s => s.trim()).filter(Boolean)
-          if (avail.length > 0) {
-            mats = avail.map(avName => {
-              const avLower = avName.toLowerCase()
-              const existing = cfg.materials.find(m => m.id.toLowerCase() === avLower || m.label.toLowerCase() === avLower)
-              if (existing) return existing
-              
-              // Fallback generic material object for custom user-created tags
-              return { 
-                id: avName, 
-                label: avName, 
-                bg: '#E4DDD6', 
-                textColor: '#1C1917', 
-                blendMode: 'multiply' 
-              }
-            })
+        // Parse custom options
+        let opts = []
+        try {
+          if (p.available_materials && p.available_materials.startsWith('[')) {
+            opts = JSON.parse(p.available_materials)
           }
+        } catch (_) {}
+        setCustomOptions(opts)
+
+        // Init selected options
+        const initialSelected = {}
+        opts.forEach(o => {
+          if (o.values && o.values.length > 0) {
+            initialSelected[o.name] = o.values[0]
+          }
+        })
+        setSelectedOptions(initialSelected)
+
+        let mats = cfg.materials
+        const isMetalProduct = p.materials && (
+          p.materials.includes('ברזל') || 
+          p.materials.includes('מתכת') || 
+          p.materials.includes('metal') || 
+          p.materials.includes('steel')
+        )
+        if (isMetalProduct) {
+          mats = [
+            { id: 'matte_black', label: 'מט שחור', bg: '#1a1a1a', textColor: '#9acbff', blendMode: 'screen' },
+            { id: 'silver',      label: 'כסוף',    bg: '#b0b8c1', textColor: '#1a1c1c', blendMode: 'multiply' },
+          ]
         }
         setMaterials(mats)
-        setSelectedMaterial(mats[0].id)
+        setSelectedMaterial(mats[0]?.id || null)
 
         let szs = cfg.sizes
         if (p.available_sizes) {
-          const avail = p.available_sizes.split(',').map(s => s.trim())
+          const avail = p.available_sizes.split(',').map(s => s.trim()).filter(Boolean)
           szs = avail.map((s, i) => ({ id: `size_${i}`, label: s, extra: 0 }))
         }
         setSizes(szs)
-        setSelectedSize(szs[0].id)
+        setSelectedSize(szs[0]?.id || null)
+
+        let cols = []
+        if (p.available_colors) {
+          cols = p.available_colors.split(',').map(s => s.trim()).filter(Boolean)
+        }
+        setColors(cols)
+        if (cols.length > 0) setSelectedColor(cols[0])
       })
       .catch(() => setNotFound(true))
       .finally(() => setLoading(false))
-  }, [productId])
-
-  // ── Restore draft ─────────────────────────────────────────────────────────
-  useEffect(() => {
-    if (!productId) return
-    try {
-      const d = JSON.parse(localStorage.getItem(`am_draft_${productId}`))
-      if (!d) return
-      if (d.engravingType) setEngravingType(d.engravingType)
-      if (d.engravingText) setEngravingText(d.engravingText)
-      if (d.selectedFont)  setSelectedFont(d.selectedFont)
-      if (d.placement)     setPlacement(d.placement)
-      if (d.sizeScale)     setSizeScale(d.sizeScale)
-      showToast('הטיוטה שלך שוחזרה')
-    } catch (_) {}
   }, [productId])
 
   // ── Helpers ───────────────────────────────────────────────────────────────
@@ -469,6 +690,7 @@ export default function Customizer() {
   const saveForLater = () => {
     localStorage.setItem(`am_draft_${productId}`, JSON.stringify({
       engravingType, engravingText, selectedFont, placement, sizeScale,
+      placementLogo, sizeScaleLogo, rotationText, rotationLogo, textAlignment,
     }))
     showToast('נשמר! ההגדרות ישמרו לביקור הבא.')
   }
@@ -490,6 +712,13 @@ export default function Customizer() {
       material: selectedMaterial, fontStyle: selectedFont,
       size: selectedSize, quantity, price: grandTotal,
       sizeScale, placement, wantsProof, specialNotes,
+      color: selectedColor,
+      customOptions: selectedOptions, // Pass chosen custom options
+      placementLogo,
+      sizeScaleLogo,
+      rotationText,
+      rotationLogo,
+      textAlignment,
     })
     navigate('/checkout')
   }
@@ -518,6 +747,12 @@ export default function Customizer() {
   const unitPrice  = product.price + (size?.extra || 0)
   const grandTotal = unitPrice * quantity
 
+  const parts = typeof placement === 'string' && placement.startsWith('custom_') ? placement.split('_') : []
+  const customX = parseFloat(parts[1]) || 50
+  const customY = parseFloat(parts[2]) || 50
+  const customW = parseFloat(parts[3]) || 50
+  const customH = parseFloat(parts[4]) || 30
+
   const showTextSection = engravingType !== 'logo'
   const showLogoSection = engravingType !== 'text'
 
@@ -529,7 +764,8 @@ export default function Customizer() {
       text:     showTextSection ? n() : (i++, null),
       logo:     showLogoSection ? n() : (i++, null),
       place:    n(),
-      material: n(),
+      color:    colors.length > 0 ? n() : null,
+      material: (materials.length > 0 && customOptions.length === 0) ? n() : null,
       proof:    n(),
       notes:    n(),
     }
@@ -537,15 +773,58 @@ export default function Customizer() {
 
   const typeLabels = { text: 'טקסט בלבד', logo: 'תמונה בלבד', both: 'טקסט + תמונה' }
 
-  const { url: productImg, zone: designZone } = getPreviewImage(product)
+  const getProductImg = () => {
+    // Dynamic image swap if custom option specifies an image
+    for (let optName in selectedOptions) {
+      const val = selectedOptions[optName]
+      if (val && val.image_url) return resolveUrl(val.image_url)
+    }
+    const { url: previewUrl } = getPreviewImage(product)
+    return previewUrl
+  }
+
+  const { zone: designZone } = getPreviewImage(product)
+  const productImg = getProductImg()
 
   const previewProps = {
     product, productImg, designZone,
     engravingType, engravingText, engravingText2,
     material, font, sizeScale, placement, uploadedImgSrc,
     previewApproved,
+    placementLogo,
+    sizeScaleLogo,
+    rotationText,
+    rotationLogo,
+    textAlignment,
     onApprove: () => setPreviewApproved(true),
-    onAdjust: () => document.getElementById('et-input')?.scrollIntoView({ behavior: 'smooth', block: 'center' }),
+    onAdjust: () => {
+      setPreviewApproved(false)
+      document.getElementById('et-input')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+    },
+    onCustomPlacementChange: (val) => {
+      setPlacement(val)
+      setPreviewApproved(false)
+    },
+    onSizeScaleChange: (val) => {
+      setSizeScale(val)
+      setPreviewApproved(false)
+    },
+    onCustomPlacementChangeLogo: (val) => {
+      setPlacementLogo(val)
+      setPreviewApproved(false)
+    },
+    onSizeScaleChangeLogo: (val) => {
+      setSizeScaleLogo(val)
+      setPreviewApproved(false)
+    },
+    onRotationTextChange: (val) => {
+      setRotationText(val)
+      setPreviewApproved(false)
+    },
+    onRotationLogoChange: (val) => {
+      setRotationLogo(val)
+      setPreviewApproved(false)
+    },
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -758,98 +1037,142 @@ export default function Customizer() {
               </SectionCard>
             )}
 
-            {/* §0N Placement & Size Scale */}
-            <SectionCard num={nums.place} title="איפה למקם?" desc="לחץ על אזור בחתיכה לקביעת המיקום.">
-              <div className="flex flex-col items-center gap-4">
-                {/* Product silhouette with zone grid */}
-                <div className="relative">
-                  <div
-                    className="relative w-56 h-36 rounded-xl overflow-hidden border-2 shadow-md"
-                    style={{
-                      background: material
-                        ? `linear-gradient(135deg, ${material.bg}ee, ${material.bg}99)`
-                        : 'linear-gradient(135deg, #C8A96E, #A07830)',
-                      borderColor: material?.bg || '#8B6914',
-                    }}
-                  >
-                    {/* Grain texture */}
-                    <div
-                      className="absolute inset-0 opacity-30"
-                      style={{
-                        backgroundImage: 'repeating-linear-gradient(12deg, transparent, transparent 10px, rgba(0,0,0,0.25) 10px, rgba(0,0,0,0.25) 11px)',
-                      }}
-                    />
-                    {/* 3×3 zone grid */}
-                    <div className="absolute inset-1.5 grid grid-cols-3 grid-rows-3 gap-0.5" style={{ direction: 'ltr' }}>
-                      {ZONES.map(z => (
+            {/* Dynamic Custom Option Groups */}
+            {customOptions.map((optGroup, idx) => {
+              const currentVal = selectedOptions[optGroup.name]
+              return (
+                <SectionCard
+                  key={idx}
+                  num="—"
+                  title={optGroup.name}
+                  desc={`בחר ${optGroup.name} מבין האפשרויות הזמינות.`}
+                >
+                  <div className="grid grid-cols-2 gap-3">
+                    {optGroup.values && optGroup.values.map((v, valIdx) => {
+                      const isSelected = currentVal && currentVal.label === v.label
+                      return (
                         <button
-                          key={z.id}
-                          onClick={() => { setPlacement(z.id); setPreviewApproved(false) }}
-                          title={z.label}
-                          className="rounded transition-all"
-                          style={placement === z.id
-                            ? { background: 'rgba(45,106,79,0.45)', border: '1.5px solid #2D6A4F' }
-                            : { border: '1px solid transparent' }}
-                          onMouseEnter={e => { if (placement !== z.id) e.currentTarget.style.background = 'rgba(45,106,79,0.18)' }}
-                          onMouseLeave={e => { if (placement !== z.id) e.currentTarget.style.background = '' }}
-                        />
-                      ))}
+                          key={valIdx}
+                          type="button"
+                          onClick={() => {
+                            setSelectedOptions(prev => ({
+                              ...prev,
+                              [optGroup.name]: v
+                            }))
+                            setPreviewApproved(false)
+                          }}
+                          className="flex items-center gap-3 p-3.5 rounded-xl border-2 transition-all text-right w-full justify-between"
+                          style={isSelected
+                            ? { borderColor: '#2D6A4F', background: '#D8F3DC' }
+                            : { borderColor: '#E4DDD6', background: '#fff' }}
+                        >
+                          <div className="flex items-center gap-2">
+                            {v.color && (
+                              <div
+                                className="w-5 h-5 rounded-full shadow-sm border border-[#E4DDD6] flex-shrink-0"
+                                style={{ background: v.color }}
+                              />
+                            )}
+                            <span className="font-semibold text-[#1C1917] text-sm">{v.label}</span>
+                          </div>
+                          {isSelected && (
+                            <span className="text-[#2D6A4F] text-xs font-bold">נבחר</span>
+                          )}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </SectionCard>
+              )
+            })}
+
+            {/* §0N Inline Live Preview Card inside the Customization Flow */}
+            <SectionCard num={nums.place} title="מיקום וגודל חריטה" desc="כוונן את המיקום והגודל של החריטה על ידי גרירה ושינוי גודל ישירות על גבי המוצר!">
+              <div className="w-full relative rounded-2xl overflow-hidden shadow-inner bg-[#F7F5F2] p-2 border border-[#E4DDD6]">
+                <LivePreview {...previewProps} interactive={true} />
+              </div>
+              
+              {!previewApproved && showTextSection && (
+                <div className="mt-5 space-y-4 border-t border-[#E4DDD6] pt-4">
+                  <div className="space-y-3">
+                    <h4 className="text-sm font-semibold text-[#1C1917]">הגדרות טקסט</h4>
+                    
+                    {/* Alignment controls */}
+                    <div className="space-y-1.5">
+                      <span className="text-xs text-[#6B6560]">יישור ומיקום טקסט (שמאל / מרכז / ימין):</span>
+                      <div className="flex bg-[#F7F5F2] border border-[#E4DDD6] rounded-xl p-1 gap-1 w-full max-w-xs">
+                        {[
+                          { id: 'right', label: 'ימין' },
+                          { id: 'center', label: 'מרכז' },
+                          { id: 'left', label: 'שמאל' },
+                        ].map(align => (
+                          <button
+                            key={align.id}
+                            type="button"
+                            onClick={() => {
+                              setTextAlignment(align.id);
+                              setPreviewApproved(false);
+                            }}
+                            className="flex-1 py-1.5 px-2 text-xs font-semibold rounded-lg transition-all"
+                            style={textAlignment === align.id
+                              ? { background: '#fff', color: '#2D6A4F', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }
+                              : { color: '#6B6560' }}
+                          >
+                            {align.label}
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
-                  <p className="text-[11px] text-[#6B6560] text-center mt-2">{product.name_he}</p>
                 </div>
-
-                <p className="text-sm font-medium" style={{ color: '#2D6A4F' }}>
-                  מיקום נבחר: {ZONES.find(z => z.id === placement)?.label || 'מרכז'}
-                </p>
-              </div>
-
-              <Divider />
-
-              {/* Engraving size scale */}
-              <div>
-                <div className="flex justify-between items-baseline mb-2">
-                  <p className="text-sm font-medium text-[#1C1917]">גודל החריטה</p>
-                  <p className="text-xs font-bold text-[#2D6A4F]">{(sizeScale * 100).toFixed(0)}%</p>
-                </div>
-                <input
-                  type="range"
-                  min="0.3"
-                  max="3.0"
-                  step="0.05"
-                  value={sizeScale}
-                  onChange={e => { setSizeScale(parseFloat(e.target.value)); setPreviewApproved(false) }}
-                  className="w-full h-2 bg-[#E4DDD6] rounded-lg appearance-none cursor-pointer"
-                  style={{ accentColor: '#2D6A4F' }}
-                />
-                <div className="flex justify-between mt-1 px-1">
-                  <span className="text-[10px] text-[#6B6560]">קטן מאוד</span>
-                  <span className="text-[10px] text-[#6B6560]">ענק</span>
-                </div>
-              </div>
+              )}
             </SectionCard>
+
+            {/* §0N Color (if multiple) */}
+            {colors.length > 0 && (
+              <SectionCard num={nums.color} title="צבע המוצר" desc="בחר צבע עבור הפריט שלך.">
+                <div className="grid grid-cols-2 gap-3">
+                  {colors.map(c => (
+                    <button
+                      key={c}
+                      type="button"
+                      onClick={() => setSelectedColor(c)}
+                      className="py-3.5 px-4 rounded-xl border-2 transition-all flex flex-col items-center"
+                      style={selectedColor === c
+                        ? { borderColor: '#2D6A4F', background: '#D8F3DC' }
+                        : { borderColor: '#E4DDD6', background: '#fff' }}
+                    >
+                      <span className="font-bold text-[#1C1917] text-sm">{c}</span>
+                    </button>
+                  ))}
+                </div>
+              </SectionCard>
+            )}
 
             {/* §0N Material */}
-            <SectionCard num={nums.material} title="חומר" desc="לכל חומר מאפיינים ייחודיים של חריטה.">
-              <div className="grid grid-cols-2 gap-3">
-                {materials.map(m => (
-                  <button
-                    key={m.id}
-                    onClick={() => { setSelectedMaterial(m.id); setPreviewApproved(false) }}
-                    className="flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-right"
-                    style={selectedMaterial === m.id
-                      ? { borderColor: '#2D6A4F', background: '#D8F3DC' }
-                      : { borderColor: '#E4DDD6', background: '#fff' }}
-                  >
-                    <div
-                      className="w-8 h-8 rounded-full shadow-sm border border-[#E4DDD6] flex-shrink-0"
-                      style={{ background: m.bg }}
-                    />
-                    <span className="font-semibold text-[#1C1917] text-sm">{m.label}</span>
-                  </button>
-                ))}
-              </div>
-            </SectionCard>
+            {materials.length > 0 && customOptions.length === 0 && (
+              <SectionCard num={nums.material} title="חומר" desc="לכל חומר מאפיינים ייחודיים של חריטה.">
+                <div className="grid grid-cols-2 gap-3">
+                  {materials.map(m => (
+                    <button
+                      key={m.id}
+                      type="button"
+                      onClick={() => { setSelectedMaterial(m.id); setPreviewApproved(false) }}
+                      className="flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-right"
+                      style={selectedMaterial === m.id
+                        ? { borderColor: '#2D6A4F', background: '#D8F3DC' }
+                        : { borderColor: '#E4DDD6', background: '#fff' }}
+                    >
+                      <div
+                        className="w-8 h-8 rounded-full shadow-sm border border-[#E4DDD6] flex-shrink-0"
+                        style={{ background: m.bg }}
+                      />
+                      <span className="font-semibold text-[#1C1917] text-sm">{m.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </SectionCard>
+            )}
 
             {/* Product size (if multiple) */}
             {sizes.length > 1 && (
@@ -930,7 +1253,7 @@ export default function Customizer() {
                   משוערת
                 </span>
               </div>
-              <LivePreview {...previewProps} />
+              <LivePreview {...previewProps} interactive={false} />
             </div>
 
             {/* Order summary + CTA */}
@@ -943,7 +1266,7 @@ export default function Customizer() {
                   ['חריטה',    typeLabels[engravingType]],
                   ['גופן',     showTextSection ? FONT_DEFS[selectedFont]?.label : '—'],
                   ['חומר',     material?.label || '—'],
-                  ['מיקום',    ZONES.find(z => z.id === placement)?.label || 'מרכז'],
+                  ['צבע',      selectedColor || '—'],
                   ['זמן ייצור', wantsProof ? '4–6 ימי עסקים' : '3–5 ימי עסקים'],
                 ].map(([k, v]) => (
                   <div key={k} className="flex justify-between items-baseline gap-2">
@@ -970,14 +1293,14 @@ export default function Customizer() {
               </div>
 
               {/* Price */}
-              <div className="flex items-end justify-between mb-5">
-                <span className="text-sm text-[#6B6560]">סה&quot;כ לתשלום</span>
-                <div className="text-right">
-                  <span className="block text-3xl font-extrabold font-headline" style={{ color: '#2D6A4F' }}>
-                    ₪{grandTotal.toFixed(0)}
-                  </span>
-                  <span className="text-xs text-[#6B6560]">מחיר סופי כולל הכל</span>
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex flex-col text-right">
+                  <span className="text-sm font-semibold text-[#1C1917]">סה&quot;כ לתשלום</span>
+                  <span className="text-[11px] text-[#6B6560]">לפני משלוח</span>
                 </div>
+                <span className="text-3xl font-extrabold font-headline" style={{ color: '#2D6A4F' }}>
+                  ₪{grandTotal.toFixed(0)}
+                </span>
               </div>
 
               {/* CTAs */}
@@ -1015,8 +1338,9 @@ export default function Customizer() {
               {showTextSection ? ` · ${FONT_DEFS[selectedFont]?.label}` : ''}
             </p>
           </div>
-          <span className="text-base font-bold flex-shrink-0" style={{ color: '#2D6A4F' }}>
-            ₪{grandTotal.toFixed(0)}
+          <span className="text-base font-bold flex-shrink-0 flex flex-col items-end leading-none" style={{ color: '#2D6A4F' }}>
+            <span>₪{grandTotal.toFixed(0)}</span>
+            <span className="text-[9px] text-[#6B6560] font-normal mt-0.5">לפני משלוח</span>
           </span>
           <button
             onClick={handleOrder}
