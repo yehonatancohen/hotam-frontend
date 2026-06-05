@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { useTheme } from '../context/ThemeContext'
 
 const API = import.meta.env.VITE_API_URL
 const STATIC_BASE = import.meta.env.VITE_STATIC_BASE
@@ -43,6 +44,7 @@ export default function Products() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)
   const [activeCategory, setActiveCategory] = useState('all')
+  const { theme: t } = useTheme()
 
   useEffect(() => {
     document.title = 'כל המוצרים – חריטת לייזר אישית | חותם'
@@ -69,58 +71,72 @@ export default function Products() {
   const filtered = activeCategory === 'all' ? products : products.filter(p => p.category === activeCategory)
 
   return (
-    <div>
+    <div dir="rtl" className="transition-colors duration-300" style={{ background: t.bg, color: t.text }}>
       {/* Page header */}
-      <section className="py-16 md:py-24 px-6 md:px-8 bg-surface">
+      <section className="py-16 md:py-24 px-6 md:px-8" style={{ background: t.bg }}>
         <div className="max-w-7xl mx-auto">
-          <Link to="/" className="inline-flex items-center gap-1.5 text-on-surface-variant hover:text-primary text-sm mb-8 transition-colors">
+          <Link 
+            to="/" 
+            className="inline-flex items-center gap-1.5 text-sm mb-8 transition-colors"
+            style={{ color: t.textSub }}
+            onMouseEnter={e => e.currentTarget.style.color = t.text}
+            onMouseLeave={e => e.currentTarget.style.color = t.textSub}
+          >
             <span className="material-symbols-outlined text-base">arrow_forward</span>
             חזרה לדף הבית
           </Link>
-          <h1 className="font-headline font-black text-5xl md:text-7xl text-on-surface tracking-tighter mb-4">
+          <h1 className="font-headline font-black text-5xl md:text-7xl tracking-tighter mb-4" style={{ color: t.text }}>
             כל המוצרים
           </h1>
-          <p className="text-on-surface-variant text-xl max-w-2xl leading-relaxed font-light">
+          <p className="text-xl max-w-2xl leading-relaxed font-light" style={{ color: t.textSub }}>
             בחרו מוצר, התאימו אישית וקבלו פריט שנוצר עבורכם בדיוק מיקרוסקופי.
           </p>
         </div>
       </section>
 
       {/* Category filter */}
-      <div className="sticky top-[57px] z-40 bg-surface/95 backdrop-blur-sm border-b border-outline-variant/15 px-6 md:px-8 py-3">
+      <div 
+        className="sticky top-[52px] z-40 px-6 md:px-8 py-3 border-b backdrop-blur-sm transition-colors duration-300" 
+        style={{ background: t.navBg, borderColor: t.border }}
+      >
         <div className="max-w-7xl mx-auto flex gap-2 overflow-x-auto scrollbar-thin pb-0.5">
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`px-4 py-2 rounded-full text-sm font-label font-semibold whitespace-nowrap transition-all ${
-                activeCategory === cat
-                  ? 'bg-primary text-white shadow-glow'
-                  : 'bg-surface-container text-on-surface hover:bg-surface-container-high'
-              }`}
-            >
-              {cat === 'all' ? 'הכל' : CATEGORY_LABELS[cat] || cat}
-              <span className="mr-1.5 opacity-60 text-xs">
-                ({cat === 'all' ? products.length : products.filter(p => p.category === cat).length})
-              </span>
-            </button>
-          ))}
+          {categories.map(cat => {
+            const active = activeCategory === cat;
+            return (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className="px-4 py-2 rounded-full text-sm font-label font-semibold whitespace-nowrap transition-all"
+                style={{
+                  background: active ? t.accent : t.bgCard,
+                  color: active ? t.accentText : t.textSub,
+                  border: `1.5px solid ${active ? t.accent : t.border}`,
+                  boxShadow: active ? `0 2px 8px ${t.accent}33` : 'none',
+                }}
+              >
+                {cat === 'all' ? 'הכל' : CATEGORY_LABELS[cat] || cat}
+                <span className="mr-1.5 opacity-60 text-xs">
+                  ({cat === 'all' ? products.length : products.filter(p => p.category === cat).length})
+                </span>
+              </button>
+            )
+          })}
         </div>
       </div>
 
       {/* Grid */}
-      <section className="py-12 px-6 md:px-8 bg-surface">
+      <section className="py-12 px-6 md:px-8" style={{ background: t.bg }}>
         <div className="max-w-7xl mx-auto">
           {loading ? (
             <div>
-              <p className="text-center text-on-surface-variant text-sm mb-8 animate-pulse">טוען מוצרים...</p>
+              <p className="text-center text-sm mb-8 animate-pulse" style={{ color: t.textMuted }}>טוען מוצרים...</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-pulse">
                 {[...Array(8)].map((_, i) => (
-                  <div key={i} className="bg-surface-container-low rounded-xl overflow-hidden">
-                    <div className="aspect-square bg-surface-container" />
+                  <div key={i} className="rounded-xl overflow-hidden border" style={{ background: t.bgCard, borderColor: t.border }}>
+                    <div className="aspect-square" style={{ background: t.bgAlt }} />
                     <div className="p-5 space-y-2">
-                      <div className="h-4 bg-surface-container rounded w-3/4" />
-                      <div className="h-3 bg-surface-container rounded w-full" />
+                      <div className="h-4 rounded w-3/4" style={{ background: t.bgAlt }} />
+                      <div className="h-3 rounded w-full" style={{ background: t.bgAlt }} />
                     </div>
                   </div>
                 ))}
@@ -128,15 +144,19 @@ export default function Products() {
             </div>
           ) : error ? (
             <div className="text-center py-20">
-              <span className="material-symbols-outlined text-5xl block mb-4 text-on-surface-variant">wifi_off</span>
-              <p className="text-on-surface font-headline font-bold text-xl mb-2">לא הצלחנו לטעון את המוצרים</p>
-              <p className="text-on-surface-variant text-sm mb-6">ייתכן שהשרת מתחמם — נסו שוב בעוד רגע</p>
-              <button onClick={load} className="btn-primary px-8 py-3">
+              <span className="material-symbols-outlined text-5xl block mb-4" style={{ color: t.textMuted }}>wifi_off</span>
+              <p className="font-headline font-bold text-xl mb-2" style={{ color: t.text }}>לא הצלחנו לטעון את המוצרים</p>
+              <p className="text-sm mb-6" style={{ color: t.textMuted }}>נסו שוב בעוד רגע</p>
+              <button 
+                onClick={load} 
+                className="px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-200"
+                style={{ background: t.accent, color: t.accentText }}
+              >
                 נסה שוב
               </button>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-20 text-on-surface-variant">
+            <div className="text-center py-20" style={{ color: t.textMuted }}>
               <span className="material-symbols-outlined text-5xl block mb-3">inbox</span>
               לא נמצאו מוצרים בקטגוריה זו
             </div>
@@ -154,46 +174,66 @@ export default function Products() {
 }
 
 function ProductCard({ product }) {
-  const navigate = useNavigate()
   const src = imgSrc(product)
+  const { theme: t } = useTheme()
 
   return (
     <Link
       to={`/products/${product.id}`}
-      className="group bg-surface-container-lowest rounded-xl overflow-hidden border border-outline-variant/10 hover:border-outline-variant/30 hover:shadow-monolith transition-all duration-300 flex flex-col"
+      className="group rounded-xl overflow-hidden border transition-all duration-300 flex flex-col"
+      style={{
+        background: t.bgCard,
+        borderColor: t.border,
+      }}
+      onMouseEnter={e => {
+        e.currentTarget.style.borderColor = t.borderStrong;
+        e.currentTarget.style.boxShadow = t.shadow;
+      }}
+      onMouseLeave={e => {
+        e.currentTarget.style.borderColor = t.border;
+        e.currentTarget.style.boxShadow = 'none';
+      }}
     >
       {/* Image */}
-      <div className="aspect-square overflow-hidden relative bg-surface-container">
+      <div className="aspect-square overflow-hidden relative" style={{ background: t.bgAlt }}>
         <img
           src={src}
           alt={product.name_he}
-          className="w-full h-full object-contain bg-[#FAF8F5] group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
         <div className="absolute bottom-3 right-3 left-3 flex justify-end opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
-          <span className="bg-primary text-white text-xs font-bold px-3 py-1.5 rounded-full shadow">
+          <span 
+            className="text-xs font-bold px-3 py-1.5 rounded-full shadow"
+            style={{ background: t.accent, color: t.accentText }}
+          >
             התחל לעצב ←
           </span>
         </div>
       </div>
 
       {/* Info */}
-      <div className="p-5 flex-1 flex flex-col">
-        <div className="text-xs text-on-surface-variant mb-1.5 font-label uppercase tracking-wider">
+      <div className="p-5 flex-1 flex flex-col text-right">
+        <div className="text-xs mb-1.5 font-label uppercase tracking-wider" style={{ color: t.textMuted }}>
           {CATEGORY_LABELS[product.category] || product.category}
         </div>
-        <h3 className="font-headline font-bold text-on-surface text-lg leading-snug mb-2 group-hover:text-primary transition-colors">
+        <h3 
+          className="font-headline font-bold text-lg leading-snug mb-2 transition-colors"
+          style={{ color: t.text }}
+          onMouseEnter={e => e.currentTarget.style.color = t.accent}
+          onMouseLeave={e => e.currentTarget.style.color = t.text}
+        >
           {product.name_he}
         </h3>
-        <p className="text-on-surface-variant text-sm leading-relaxed flex-1 line-clamp-2">
+        <p className="text-sm leading-relaxed flex-1 line-clamp-2" style={{ color: t.textSub }}>
           {product.description_he}
         </p>
-        <div className="mt-4 flex items-center justify-between">
-          <span className="font-headline font-black text-primary text-xl flex flex-col items-start leading-none">
+        <div className="mt-4 flex items-center justify-between border-t pt-4" style={{ borderColor: t.border }}>
+          <span className="font-headline font-black text-xl flex flex-col items-start leading-none" style={{ color: t.accent }}>
             <span>₪{product.price}</span>
-            <span className="text-[10px] text-on-surface-variant font-normal mt-0.5">לפני משלוח</span>
+            <span className="text-[10px] font-normal mt-0.5" style={{ color: t.textMuted }}>לפני משלוח</span>
           </span>
-          <span className="material-symbols-outlined text-on-surface-variant/50 group-hover:text-primary transition-colors">arrow_back</span>
+          <span className="material-symbols-outlined transition-colors" style={{ color: t.textMuted }}>arrow_back</span>
         </div>
       </div>
     </Link>

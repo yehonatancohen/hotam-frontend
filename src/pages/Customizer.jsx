@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from 'react'
 import { useNavigate, useParams, Link } from 'react-router-dom'
 import axios from 'axios'
 import { useCart } from '../context/CartContext'
+import { useTheme } from '../context/ThemeContext'
 
 const API = import.meta.env.VITE_API_URL
 const STATIC_BASE = import.meta.env.VITE_STATIC_BASE
@@ -145,18 +146,19 @@ const fmtBytes = b => b < 1048576 ? `${(b / 1024).toFixed(1)} KB` : `${(b / 1048
 // ── Shared sub-components ─────────────────────────────────────────────────────
 
 function SectionCard({ num, title, desc, children }) {
+  const { theme: t } = useTheme()
   return (
-    <div className="bg-white border border-[#E4DDD6] rounded-2xl p-6 shadow-sm transition-shadow focus-within:shadow-md">
+    <div className="rounded-2xl p-6 shadow-sm transition-shadow focus-within:shadow-md border" style={{ background: t.bgCard, borderColor: t.border, color: t.text }}>
       <div className="flex items-center gap-3 mb-5">
         <div
           className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0"
-          style={{ background: num === '—' ? '#9CA3AF' : '#2D6A4F' }}
+          style={{ background: num === '—' ? '#9CA3AF' : t.accent }}
         >
           {num}
         </div>
         <div>
-          <div className="text-[15px] font-semibold text-[#1C1917]">{title}</div>
-          {desc && <div className="text-xs text-[#6B6560] mt-0.5">{desc}</div>}
+          <div className="text-[15px] font-semibold" style={{ color: t.text }}>{title}</div>
+          {desc && <div className="text-xs mt-0.5" style={{ color: t.textMuted }}>{desc}</div>}
         </div>
       </div>
       {children}
@@ -165,7 +167,8 @@ function SectionCard({ num, title, desc, children }) {
 }
 
 function Divider() {
-  return <div className="border-t border-[#E4DDD6] my-5" />
+  const { theme: t } = useTheme()
+  return <div className="border-t my-5" style={{ borderColor: t.border }} />
 }
 
 // ── Live Preview ──────────────────────────────────────────────────────────────
@@ -189,6 +192,7 @@ export function LivePreview({
   onRotationTextChange,
   onRotationLogoChange,
 }) {
+  const { theme: t } = useTheme()
   const cfg = CATEGORY_CONFIG[product.category] || CATEGORY_CONFIG.mixed
   const previewText = engravingText || cfg.hint
   
@@ -216,7 +220,7 @@ export function LivePreview({
     height: 'auto',
     transform: `translate(-50%, -50%) rotate(${rotationText}deg)`,
     direction: 'ltr',
-    border: compact || !interactive || previewApproved ? 'none' : '1.5px dashed #2D6A4F',
+    border: compact || !interactive || previewApproved ? 'none' : '1.5px dashed ' + t.accent,
     background: compact || !interactive || previewApproved ? 'transparent' : 'rgba(45,106,79,0.06)',
     cursor: compact || !interactive || previewApproved ? 'default' : 'move',
     touchAction: 'none',
@@ -229,7 +233,7 @@ export function LivePreview({
     height: '28cqw',
     transform: `translate(-50%, -50%) rotate(${rotationLogo}deg) scale(${sizeScaleLogo})`,
     direction: 'ltr',
-    border: compact || !interactive || previewApproved ? 'none' : '1.5px dashed #2D6A4F',
+    border: compact || !interactive || previewApproved ? 'none' : '1.5px dashed ' + t.accent,
     background: compact || !interactive || previewApproved ? 'transparent' : 'rgba(45,106,79,0.06)',
     cursor: compact || !interactive || previewApproved ? 'default' : 'move',
     touchAction: 'none',
@@ -345,7 +349,7 @@ export function LivePreview({
   return (
     <div>
       <div
-        className="relative rounded-xl overflow-hidden border border-[#E4DDD6]"
+        className="relative rounded-xl overflow-hidden border border"
         style={{ aspectRatio: '4/3', containerType: 'inline-size' }}
       >
         <div ref={containerRef} className="absolute inset-0 w-full h-full" style={zoomStyle}>
@@ -389,18 +393,18 @@ export function LivePreview({
               {!compact && interactive && !previewApproved && (
                 <>
                   <div
-                    className="absolute w-4.5 h-4.5 bg-white border-2 border-[#2D6A4F] rounded-full cursor-se-resize z-30"
-                    style={{ bottom: '-9px', right: '-9px' }}
+                    className="absolute w-4.5 h-4.5 bg-white border-2 rounded-full cursor-se-resize z-30"
+                    style={{ bottom: '-9px', right: '-9px', borderColor: t.accent }}
                     onMouseDown={e => handleStartDrag('text', 'resize', e)}
                     onTouchStart={e => handleStartDrag('text', 'resize', e)}
                   />
                   <div
-                    className="absolute w-5 h-5 bg-white border-2 border-[#2D6A4F] rounded-full cursor-alias z-30 flex items-center justify-center shadow-sm"
-                    style={{ top: '-24px', left: '50%', transform: 'translateX(-50%)' }}
+                    className="absolute w-5 h-5 bg-white border-2 rounded-full cursor-alias z-30 flex items-center justify-center shadow-sm"
+                    style={{ top: '-24px', left: '50%', transform: 'translateX(-50%)', borderColor: t.accent }}
                     onMouseDown={e => handleStartDrag('text', 'rotate', e)}
                     onTouchStart={e => handleStartDrag('text', 'rotate', e)}
                   >
-                    <span className="material-symbols-outlined text-[10px] text-[#2D6A4F] font-bold select-none pointer-events-none">rotate_right</span>
+                    <span className="material-symbols-outlined text-[10px] font-bold select-none pointer-events-none" style={{ color: t.accent }}>rotate_right</span>
                   </div>
                 </>
               )}
@@ -428,18 +432,18 @@ export function LivePreview({
               {!compact && interactive && !previewApproved && (
                 <>
                   <div
-                    className="absolute w-4.5 h-4.5 bg-white border-2 border-[#2D6A4F] rounded-full cursor-se-resize z-30"
-                    style={{ bottom: '-9px', right: '-9px' }}
+                    className="absolute w-4.5 h-4.5 bg-white border-2 rounded-full cursor-se-resize z-30"
+                    style={{ bottom: '-9px', right: '-9px', borderColor: t.accent }}
                     onMouseDown={e => handleStartDrag('logo', 'resize', e)}
                     onTouchStart={e => handleStartDrag('logo', 'resize', e)}
                   />
                   <div
-                    className="absolute w-5 h-5 bg-white border-2 border-[#2D6A4F] rounded-full cursor-alias z-30 flex items-center justify-center shadow-sm"
-                    style={{ top: '-24px', left: '50%', transform: 'translateX(-50%)' }}
+                    className="absolute w-5 h-5 bg-white border-2 rounded-full cursor-alias z-30 flex items-center justify-center shadow-sm"
+                    style={{ top: '-24px', left: '50%', transform: 'translateX(-50%)', borderColor: t.accent }}
                     onMouseDown={e => handleStartDrag('logo', 'rotate', e)}
                     onTouchStart={e => handleStartDrag('logo', 'rotate', e)}
                   >
-                    <span className="material-symbols-outlined text-[10px] text-[#2D6A4F] font-bold select-none pointer-events-none">rotate_right</span>
+                    <span className="material-symbols-outlined text-[10px] font-bold select-none pointer-events-none" style={{ color: t.accent }}>rotate_right</span>
                   </div>
                 </>
               )}
@@ -467,13 +471,13 @@ export function LivePreview({
           <div className="flex gap-2 mt-3">
             {previewApproved ? (
               <div className="flex-1 flex gap-2">
-                <div className="flex-1 py-2.5 text-center text-xs font-semibold text-[#2D6A4F] bg-[#D8F3DC] border border-[#2D6A4F] rounded-xl select-none flex items-center justify-center">
+                <div className="flex-1 py-2.5 text-center text-xs font-semibold rounded-xl select-none flex items-center justify-center border" style={{ color: t.accent, background: t.accentSubtle, borderColor: t.accent }}>
                   ✓ התצוגה אושרה — מוכן להוספה לסל
                 </div>
                 <button
                   onClick={onAdjust}
                   type="button"
-                  className="px-4 py-2.5 text-xs font-semibold text-[#2D6A4F] bg-white border-2 border-[#2D6A4F] rounded-xl hover:bg-[#D8F3DC] transition-all shrink-0"
+                  className="px-4 py-2.5 text-xs font-semibold bg-white border-2 rounded-xl transition-all shrink-0" style={{ color: t.accent, borderColor: t.accent }} onMouseEnter={e => e.currentTarget.style.background = t.accentSubtle} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
                 >
                   ערוך
                 </button>
@@ -483,15 +487,15 @@ export function LivePreview({
                 <button
                   onClick={onApprove}
                   className="flex-1 py-2.5 text-sm font-semibold text-white rounded-xl transition-colors"
-                  style={{ background: '#2D6A4F' }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#1B4332'}
-                  onMouseLeave={e => e.currentTarget.style.background = '#2D6A4F'}
+                  style={{ background: t.accent }}
+                  onMouseEnter={e => e.currentTarget.style.background = t.accentHover}
+                  onMouseLeave={e => e.currentTarget.style.background = t.accent}
                 >
                   נראה טוב ✓
                 </button>
                 <button
                   onClick={onAdjust}
-                  className="flex-1 py-2.5 text-sm font-medium text-[#6B6560] bg-white border border-[#E4DDD6] rounded-xl hover:border-[#6B6560] transition-colors"
+                  className="flex-1 py-2.5 text-sm font-medium text-[#6B6560] bg-white border border rounded-xl hover:border-[#6B6560] transition-colors"
                 >
                   שנה הגדרות
                 </button>
@@ -507,6 +511,7 @@ export function LivePreview({
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export default function Customizer() {
+  const { theme: t } = useTheme()
   const { productId } = useParams()
   const navigate = useNavigate()
   const { addToCart } = useCart()
@@ -855,7 +860,7 @@ export default function Customizer() {
 
             {/* Engraving type */}
             <SectionCard num="—" title="מה תרצה לחרוט?" desc="בחר את סוג התוכן לחריטה">
-              <div className="flex bg-[#F7F5F2] border border-[#E4DDD6] rounded-xl p-1 gap-1">
+              <div className="flex bg-[#F7F5F2] border border rounded-xl p-1 gap-1">
                 {[
                   { id: 'text', label: 'טקסט בלבד' },
                   { id: 'logo', label: 'תמונה / לוגו' },
@@ -866,7 +871,7 @@ export default function Customizer() {
                     onClick={() => { setEngravingType(t.id); setPreviewApproved(false) }}
                     className="flex-1 py-2.5 px-2 text-sm font-medium rounded-lg transition-all"
                     style={engravingType === t.id
-                      ? { background: '#fff', color: '#2D6A4F', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }
+                      ? { background: '#fff', color: t.accent, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }
                       : { color: '#6B6560' }}
                   >
                     {t.label}
@@ -896,8 +901,8 @@ export default function Customizer() {
                       validateText(v)
                       setPreviewApproved(false)
                     }}
-                    className="w-full border-[1.5px] border-[#E4DDD6] rounded-xl px-4 py-3 text-base text-[#1C1917] bg-white outline-none transition-colors focus:border-[#2D6A4F]"
-                    style={{ '--tw-ring-color': '#2D6A4F' }}
+                    className="w-full border-[1.5px] border rounded-xl px-4 py-3 text-base text-[#1C1917] bg-white outline-none transition-colors focus:ring-2 focus:ring-offset-2"
+                    style={{ '--tw-ring-color': t.accent }}
                     placeholder={cfg.hint}
                   />
                   {textError && (
@@ -919,7 +924,7 @@ export default function Customizer() {
                       if (!e.target.checked) setEngravingText2('')
                     }}
                     className="w-4 h-4 cursor-pointer rounded"
-                    style={{ accentColor: '#2D6A4F' }}
+                    style={{ accentColor: t.accent }}
                   />
                   <span className="text-sm font-medium text-[#1C1917]">הוסף שורה שנייה</span>
                 </label>
@@ -935,7 +940,7 @@ export default function Customizer() {
                         type="text"
                         value={engravingText2}
                         onChange={e => setEngravingText2(e.target.value.slice(0, cfg.maxChars))}
-                        className="w-full border-[1.5px] border-[#E4DDD6] rounded-xl px-4 py-3 text-base text-[#1C1917] bg-white outline-none transition-colors focus:border-[#2D6A4F]"
+                        className="w-full border-[1.5px] border rounded-xl px-4 py-3 text-base text-[#1C1917] bg-white outline-none transition-colors focus:ring-2 focus:ring-offset-2"
                         placeholder="שורה שנייה (אופציונלי)"
                       />
                     </div>
@@ -955,11 +960,11 @@ export default function Customizer() {
                         onClick={() => { setSelectedFont(fid); setPreviewApproved(false) }}
                         className="relative border-2 rounded-xl py-4 px-2 text-center transition-all"
                         style={selectedFont === fid
-                          ? { borderColor: '#2D6A4F', background: '#D8F3DC' }
-                          : { borderColor: '#E4DDD6', background: '#fff' }}
+                          ? { borderColor: t.accent, background: t.accentSubtle }
+                          : { borderColor: t.border, background: '#fff' }}
                       >
                         {selectedFont === fid && (
-                          <span className="absolute top-1.5 left-2 text-[10px] font-bold" style={{ color: '#2D6A4F' }}>✓</span>
+                          <span className="absolute top-1.5 left-2 text-[10px] font-bold" style={{ color: t.accent }}>✓</span>
                         )}
                         <span
                           className="block text-lg text-[#1C1917] mb-1"
@@ -984,8 +989,8 @@ export default function Customizer() {
                   id="drop-zone"
                   className="border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all"
                   style={isDragOver
-                    ? { borderColor: '#2D6A4F', background: '#D8F3DC' }
-                    : { borderColor: '#E4DDD6', background: '#F7F5F2' }}
+                    ? { borderColor: t.accent, background: t.accentSubtle }
+                    : { borderColor: t.border, background: '#F7F5F2' }}
                   onDragOver={e => { e.preventDefault(); setIsDragOver(true) }}
                   onDragLeave={() => setIsDragOver(false)}
                   onDrop={e => { e.preventDefault(); setIsDragOver(false); if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]) }}
@@ -1004,11 +1009,11 @@ export default function Customizer() {
                 </div>
 
                 {uploadedFile && (
-                  <div className="flex items-center gap-3 p-3.5 bg-[#F7F5F2] rounded-xl border border-[#E4DDD6] mt-3">
+                  <div className="flex items-center gap-3 p-3.5 bg-[#F7F5F2] rounded-xl border border mt-3">
                     <img
                       src={uploadedImgSrc}
                       alt="תצוגה מקדימה"
-                      className="w-14 h-14 object-contain rounded-lg bg-white border border-[#E4DDD6]"
+                      className="w-14 h-14 object-contain rounded-lg bg-white border border"
                     />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-[#1C1917] truncate">{uploadedFile.name}</p>
@@ -1063,20 +1068,20 @@ export default function Customizer() {
                           }}
                           className="flex items-center gap-3 p-3.5 rounded-xl border-2 transition-all text-right w-full justify-between"
                           style={isSelected
-                            ? { borderColor: '#2D6A4F', background: '#D8F3DC' }
-                            : { borderColor: '#E4DDD6', background: '#fff' }}
+                            ? { borderColor: t.accent, background: t.accentSubtle }
+                            : { borderColor: t.border, background: '#fff' }}
                         >
                           <div className="flex items-center gap-2">
                             {v.color && (
                               <div
-                                className="w-5 h-5 rounded-full shadow-sm border border-[#E4DDD6] flex-shrink-0"
+                                className="w-5 h-5 rounded-full shadow-sm border border flex-shrink-0"
                                 style={{ background: v.color }}
                               />
                             )}
                             <span className="font-semibold text-[#1C1917] text-sm">{v.label}</span>
                           </div>
                           {isSelected && (
-                            <span className="text-[#2D6A4F] text-xs font-bold">נבחר</span>
+                            <span className="text-[t.accent] text-xs font-bold">נבחר</span>
                           )}
                         </button>
                       )
@@ -1088,19 +1093,19 @@ export default function Customizer() {
 
             {/* §0N Inline Live Preview Card inside the Customization Flow */}
             <SectionCard num={nums.place} title="מיקום וגודל חריטה" desc="כוונן את המיקום והגודל של החריטה על ידי גרירה ושינוי גודל ישירות על גבי המוצר!">
-              <div className="w-full relative rounded-2xl overflow-hidden shadow-inner bg-[#F7F5F2] p-2 border border-[#E4DDD6]">
+              <div className="w-full relative rounded-2xl overflow-hidden shadow-inner bg-[#F7F5F2] p-2 border border">
                 <LivePreview {...previewProps} interactive={true} />
               </div>
               
               {!previewApproved && showTextSection && (
-                <div className="mt-5 space-y-4 border-t border-[#E4DDD6] pt-4">
+                <div className="mt-5 space-y-4 border-t border pt-4">
                   <div className="space-y-3">
                     <h4 className="text-sm font-semibold text-[#1C1917]">הגדרות טקסט</h4>
                     
                     {/* Alignment controls */}
                     <div className="space-y-1.5">
                       <span className="text-xs text-[#6B6560]">יישור ומיקום טקסט (שמאל / מרכז / ימין):</span>
-                      <div className="flex bg-[#F7F5F2] border border-[#E4DDD6] rounded-xl p-1 gap-1 w-full max-w-xs">
+                      <div className="flex bg-[#F7F5F2] border border rounded-xl p-1 gap-1 w-full max-w-xs">
                         {[
                           { id: 'right', label: 'ימין' },
                           { id: 'center', label: 'מרכז' },
@@ -1115,7 +1120,7 @@ export default function Customizer() {
                             }}
                             className="flex-1 py-1.5 px-2 text-xs font-semibold rounded-lg transition-all"
                             style={textAlignment === align.id
-                              ? { background: '#fff', color: '#2D6A4F', boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }
+                              ? { background: '#fff', color: t.accent, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }
                               : { color: '#6B6560' }}
                           >
                             {align.label}
@@ -1139,8 +1144,8 @@ export default function Customizer() {
                       onClick={() => setSelectedColor(c)}
                       className="py-3.5 px-4 rounded-xl border-2 transition-all flex flex-col items-center"
                       style={selectedColor === c
-                        ? { borderColor: '#2D6A4F', background: '#D8F3DC' }
-                        : { borderColor: '#E4DDD6', background: '#fff' }}
+                        ? { borderColor: t.accent, background: t.accentSubtle }
+                        : { borderColor: t.border, background: '#fff' }}
                     >
                       <span className="font-bold text-[#1C1917] text-sm">{c}</span>
                     </button>
@@ -1160,11 +1165,11 @@ export default function Customizer() {
                       onClick={() => { setSelectedMaterial(m.id); setPreviewApproved(false) }}
                       className="flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-right"
                       style={selectedMaterial === m.id
-                        ? { borderColor: '#2D6A4F', background: '#D8F3DC' }
-                        : { borderColor: '#E4DDD6', background: '#fff' }}
+                        ? { borderColor: t.accent, background: t.accentSubtle }
+                        : { borderColor: t.border, background: '#fff' }}
                     >
                       <div
-                        className="w-8 h-8 rounded-full shadow-sm border border-[#E4DDD6] flex-shrink-0"
+                        className="w-8 h-8 rounded-full shadow-sm border border flex-shrink-0"
                         style={{ background: m.bg }}
                       />
                       <span className="font-semibold text-[#1C1917] text-sm">{m.label}</span>
@@ -1184,8 +1189,8 @@ export default function Customizer() {
                       onClick={() => setSelectedSize(s.id)}
                       className="py-3 px-4 rounded-xl border-2 transition-all flex flex-col items-center"
                       style={selectedSize === s.id
-                        ? { borderColor: '#2D6A4F', background: '#D8F3DC' }
-                        : { borderColor: '#E4DDD6', background: '#fff' }}
+                        ? { borderColor: t.accent, background: t.accentSubtle }
+                        : { borderColor: t.border, background: '#fff' }}
                     >
                       <span className="font-bold text-[#1C1917] text-sm">{s.label}</span>
                       {s.extra > 0 && <span className="text-xs text-[#6B6560]">+₪{s.extra}</span>}
@@ -1200,15 +1205,15 @@ export default function Customizer() {
               <label
                 className="flex items-start gap-3 p-4 rounded-xl border-[1.5px] cursor-pointer transition-all"
                 style={wantsProof
-                  ? { borderColor: '#2D6A4F', background: '#D8F3DC' }
-                  : { borderColor: '#E4DDD6', background: '#F7F5F2' }}
+                  ? { borderColor: t.accent, background: t.accentSubtle }
+                  : { borderColor: t.border, background: '#F7F5F2' }}
               >
                 <input
                   type="checkbox"
                   checked={wantsProof}
                   onChange={e => setWantsProof(e.target.checked)}
                   className="w-4 h-4 mt-0.5 flex-shrink-0 cursor-pointer"
-                  style={{ accentColor: '#2D6A4F' }}
+                  style={{ accentColor: t.accent }}
                 />
                 <div>
                   <p className="text-sm font-medium text-[#1C1917]">שלח לי הדמיה דיגיטלית לפני הייצור</p>
@@ -1224,7 +1229,7 @@ export default function Customizer() {
               {!notesOpen ? (
                 <button
                   onClick={() => setNotesOpen(true)}
-                  className="w-full py-3.5 border-2 border-dashed border-[#E4DDD6] text-[#6B6560] font-medium text-sm rounded-xl hover:border-[#2D6A4F] hover:text-[#2D6A4F] transition-colors"
+                  className="w-full py-3.5 border-2 border-dashed border text-[#6B6560] font-medium text-sm rounded-xl  hover:text-[t.accent] transition-colors"
                 >
                   + הוסף הערה להזמנה
                 </button>
@@ -1234,7 +1239,7 @@ export default function Customizer() {
                   onChange={e => setSpecialNotes(e.target.value)}
                   placeholder="למשל: למקם את הטקסט בדיוק מתחת לידית..."
                   rows={3}
-                  className="w-full border-[1.5px] border-[#E4DDD6] rounded-xl px-4 py-3 text-sm text-[#1C1917] bg-white outline-none transition-colors focus:border-[#2D6A4F]"
+                  className="w-full border-[1.5px] border rounded-xl px-4 py-3 text-sm text-[#1C1917] bg-white outline-none transition-colors focus:ring-2 focus:ring-offset-2"
                 />
               )}
             </SectionCard>
@@ -1243,7 +1248,7 @@ export default function Customizer() {
           {/* ══════════ PREVIEW COLUMN (Sticky) ══════════ */}
           <div className="lg:sticky top-24 space-y-6">
 
-            <div className="bg-white border border-[#E4DDD6] rounded-2xl p-4 shadow-sm">
+            <div className="bg-white border border rounded-2xl p-4 shadow-sm">
               <div className="flex items-center justify-between mb-3">
                 <h3 className="font-bold text-[#1C1917]">תצוגה מקדימה</h3>
                 <span
@@ -1257,10 +1262,10 @@ export default function Customizer() {
             </div>
 
             {/* Order summary + CTA */}
-            <div className="bg-white border border-[#E4DDD6] rounded-2xl p-5 shadow-sm">
+            <div className="bg-white border border rounded-2xl p-5 shadow-sm">
               <p className="text-sm font-semibold text-[#1C1917] mb-4">סיכום הזמנה</p>
 
-              <div className="space-y-2.5 text-sm border-b border-[#E4DDD6] pb-4 mb-4">
+              <div className="space-y-2.5 text-sm border-b border pb-4 mb-4">
                 {[
                   ['מוצר',     product.name_he],
                   ['חריטה',    typeLabels[engravingType]],
@@ -1283,12 +1288,12 @@ export default function Customizer() {
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                    className="w-8 h-8 rounded-lg bg-[#F7F5F2] border border-[#E4DDD6] font-bold text-[#1C1917] hover:bg-[#E4DDD6] transition-colors text-lg leading-none"
+                    className="w-8 h-8 rounded-lg bg-[#F7F5F2] border border font-bold text-[#1C1917] hover:bg-[t.border] transition-colors text-lg leading-none"
                   >−</button>
                   <span className="font-bold text-[#1C1917] w-6 text-center">{quantity}</span>
                   <button
                     onClick={() => setQuantity(q => q + 1)}
-                    className="w-8 h-8 rounded-lg bg-[#F7F5F2] border border-[#E4DDD6] font-bold text-[#1C1917] hover:bg-[#E4DDD6] transition-colors text-lg leading-none"
+                    className="w-8 h-8 rounded-lg bg-[#F7F5F2] border border font-bold text-[#1C1917] hover:bg-[t.border] transition-colors text-lg leading-none"
                   >+</button>
                 </div>
               </div>
@@ -1299,7 +1304,7 @@ export default function Customizer() {
                   <span className="text-sm font-semibold text-[#1C1917]">סה&quot;כ לתשלום</span>
                   <span className="text-[11px] text-[#6B6560]">לפני משלוח</span>
                 </div>
-                <span className="text-3xl font-extrabold font-headline" style={{ color: '#2D6A4F' }}>
+                <span className="text-3xl font-extrabold font-headline" style={{ color: t.accent }}>
                   ₪{grandTotal.toFixed(0)}
                 </span>
               </div>
@@ -1308,16 +1313,16 @@ export default function Customizer() {
               <button
                 onClick={handleOrder}
                 className="w-full py-4 text-base font-bold text-white rounded-xl transition-all"
-                style={{ background: '#2D6A4F' }}
-                onMouseEnter={e => e.currentTarget.style.background = '#1B4332'}
-                onMouseLeave={e => e.currentTarget.style.background = '#2D6A4F'}
+                style={{ background: t.accent }}
+                onMouseEnter={e => e.currentTarget.style.background = t.accentHover}
+                onMouseLeave={e => e.currentTarget.style.background = t.accent}
               >
                 המשך לתשלום
               </button>
 
               <button
                 onClick={saveForLater}
-                className="w-full py-2.5 mt-2 text-sm font-medium text-[#6B6560] bg-white border border-[#E4DDD6] rounded-xl hover:border-[#6B6560] hover:text-[#1C1917] transition-all"
+                className="w-full py-2.5 mt-2 text-sm font-medium text-[#6B6560] bg-white border border rounded-xl hover:border-[#6B6560] hover:text-[#1C1917] transition-all"
               >
                 שמור לאחר כך
               </button>
@@ -1329,7 +1334,7 @@ export default function Customizer() {
       </main>
 
       {/* Mobile sticky bar */}
-      <div className="fixed bottom-0 inset-x-0 lg:hidden bg-white border-t border-[#E4DDD6] px-4 py-3 z-50"
+      <div className="fixed bottom-0 inset-x-0 lg:hidden bg-white border-t border px-4 py-3 z-50"
            style={{ boxShadow: '0 -4px 20px rgba(0,0,0,0.09)' }}>
         <div className="flex items-center gap-3 max-w-7xl mx-auto">
           <div className="flex-1 min-w-0">
@@ -1339,16 +1344,16 @@ export default function Customizer() {
               {showTextSection ? ` · ${FONT_DEFS[selectedFont]?.label}` : ''}
             </p>
           </div>
-          <span className="text-base font-bold flex-shrink-0 flex flex-col items-end leading-none" style={{ color: '#2D6A4F' }}>
+          <span className="text-base font-bold flex-shrink-0 flex flex-col items-end leading-none" style={{ color: t.accent }}>
             <span>₪{grandTotal.toFixed(0)}</span>
             <span className="text-[9px] text-[#6B6560] font-normal mt-0.5">לפני משלוח</span>
           </span>
           <button
             onClick={handleOrder}
             className="px-5 py-2.5 text-sm font-bold text-white rounded-xl transition-colors flex-shrink-0"
-            style={{ background: '#2D6A4F' }}
-            onMouseEnter={e => e.currentTarget.style.background = '#1B4332'}
-            onMouseLeave={e => e.currentTarget.style.background = '#2D6A4F'}
+            style={{ background: t.accent }}
+            onMouseEnter={e => e.currentTarget.style.background = t.accentHover}
+            onMouseLeave={e => e.currentTarget.style.background = t.accent}
           >
             המשך לתשלום
           </button>

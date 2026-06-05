@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { useCart } from '../context/CartContext'
+import { useTheme } from '../context/ThemeContext'
 import { LivePreview, CATEGORY_CONFIG, FONT_DEFS, SIZE_DEFS, getPreviewImage } from './Customizer'
 
 const API = import.meta.env.VITE_API_URL
@@ -51,7 +52,7 @@ function ApplePayLogo() {
     <div className="w-20 h-10 bg-black rounded-xl flex items-center justify-center gap-1.5 px-3 shrink-0">
       {/* Apple mark */}
       <svg viewBox="0 0 14 17" className="w-3.5 h-auto fill-white">
-        <path d="M13.3 13.1c-.3.6-.6 1.2-1 1.7-.5.7-1 1.1-1.5 1.1-.4 0-.9-.1-1.5-.4-.6-.3-1.1-.4-1.6-.4-.5 0-1 .1-1.6.4-.6.3-1.1.4-1.4.4-.5 0-1-.4-1.5-1.1C3 14.3 2.5 13.5 2 12.6 1.5 11.6 1 10.3 1 9c0-1.2.3-2.3.8-3.1.4-.7 1-1.2 1.7-1.5.7-.3 1.5-.5 2.4-.5.5 0 1 .1 1.7.3.7.2 1.1.3 1.3.3.2 0 .7-.1 1.5-.4.8-.2 1.5-.4 2.1-.3 1.5.1 2.6.8 3.3 2-1.3.8-2 2-2 3.5 0 1.3.5 2.4 1.5 3.3zM9.5 1.1C9.5 2 9.2 2.9 8.6 3.6c-.7.8-1.5 1.3-2.3 1.2 0-.1 0-.2 0-.3 0-.8.3-1.7.9-2.4.3-.3.7-.6 1.1-.9.5-.2.9-.3 1.2-.3 0 .1 0 .1 0 .2z"/>
+        <path d="M13.3 13.1c-.3.6-.6 1.2-1 1.7-.5.7-1 1.1-1.5 1.1-.4 0-.9-.1-1.5-.4-.6-.3-1.1-.4-1.6-.4-.5 0-1-.4-1.5-1.1C3 14.3 2.5 13.5 2 12.6 1.5 11.6 1 10.3 1 9c0-1.2.3-2.3.8-3.1.4-.7 1-1.2 1.7-1.5.7-.3 1.5-.5 2.4-.5.5 0 1 .1 1.7.3.7.2 1.1.3 1.3.3.2 0 .7-.1 1.5-.4.8-.2 1.5-.4 2.1-.3 1.5.1 2.6.8 3.3 2-1.3.8-2 2-2 3.5 0 1.3.5 2.4 1.5 3.3zM9.5 1.1C9.5 2 9.2 2.9 8.6 3.6c-.7.8-1.5 1.3-2.3 1.2 0-.1 0-.2 0-.3 0-.8.3-1.7.9-2.4.3-.3.7-.6 1.1-.9.5-.2.9-.3 1.2-.3 0 .1 0 .1 0 .2z"/>
       </svg>
       <span className="text-white text-xs font-semibold tracking-tight">Pay</span>
     </div>
@@ -81,7 +82,8 @@ const PAYMENT_METHODS = [
 
 export default function Checkout() {
   const navigate = useNavigate()
-  const { cartItem, clearCart } = useCart()
+  const { cartItem } = useCart()
+  const { theme: t } = useTheme()
 
   const [form, setForm] = useState({
     customer_name: '',
@@ -148,7 +150,7 @@ export default function Checkout() {
     e.preventDefault()
     const errs = validate()
     if (Object.keys(errs).length) { setErrors(errs); return }
-    if (!cartItem) { navigate('/customizer'); return }
+    if (!cartItem) { navigate('/products'); return }
     setSubmitting(true)
     try {
       const orderPayload = {
@@ -205,31 +207,34 @@ export default function Checkout() {
 
   if (!cartItem) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
+      <div className="min-h-[60vh] flex items-center justify-center" style={{ background: t.bg, color: t.text }}>
         <div className="text-center space-y-4">
-          <span className="material-symbols-outlined text-6xl text-on-surface-variant/40">shopping_bag</span>
-          <h2 className="font-headline font-bold text-2xl text-on-surface">העגלה ריקה</h2>
-          <p className="text-on-surface-variant">בחרו מוצר לפני שמגיעים לקופה</p>
+          <span className="material-symbols-outlined text-6xl opacity-40">shopping_bag</span>
+          <h2 className="font-headline font-bold text-2xl">העגלה ריקה</h2>
+          <p style={{ color: t.textSub }}>בחרו מוצר לפני שמגיעים לקופה</p>
           <button
-            onClick={() => navigate('/customizer')}
-            className="btn-primary px-8 py-3 mt-4"
+            onClick={() => navigate('/products')}
+            className="px-8 py-3 rounded-lg font-bold text-base transition-all duration-200 border-0 cursor-pointer"
+            style={{ background: t.accent, color: t.accentText }}
           >
-            לעמוד ההתאמה
+            בחר מוצר
           </button>
         </div>
       </div>
     )
   }
 
+  const typeLabels = { text: 'טקסט בלבד', logo: 'תמונה בלבד', both: 'טקסט + תמונה' }
+
   return (
-    <div>
+    <div dir="rtl" className="transition-colors duration-300" style={{ background: t.bg, color: t.text }}>
       <div className="max-w-7xl mx-auto px-6 md:px-8 py-12 md:py-20">
         {/* Header */}
         <header className="mb-10 md:mb-12 text-right">
-          <h1 className="font-headline text-4xl md:text-6xl font-black text-on-surface tracking-tight mb-2">
+          <h1 className="font-headline text-4xl md:text-6xl font-black tracking-tight mb-2" style={{ color: t.text }}>
             תשלום מאובטח
           </h1>
-          <p className="text-on-surface-variant font-body text-lg opacity-80">
+          <p className="text-lg opacity-80" style={{ color: t.textSub }}>
             אנא השלם את פרטי ההזמנה שלך למטה
           </p>
         </header>
@@ -239,42 +244,45 @@ export default function Checkout() {
             {/* Payment section */}
             <section className="lg:col-span-7 order-1 lg:order-2 space-y-7">
               {/* Customer Details */}
-              <div className="bg-surface-container-lowest rounded-xl p-6 md:p-8 shadow-monolith border border-outline-variant/10">
-                <h2 className="font-headline text-xl font-bold mb-6 flex items-center gap-2 text-on-surface">
-                  <span className="material-symbols-outlined text-primary">person</span>
+              <div className="rounded-xl p-6 md:p-8 border shadow-sm" style={{ background: t.bgCard, borderColor: t.border }}>
+                <h2 className="font-headline text-xl font-bold mb-6 flex items-center gap-2" style={{ color: t.text }}>
+                  <span className="material-symbols-outlined" style={{ color: t.accent }}>person</span>
                   פרטי הלקוח
                 </h2>
                 <div className="space-y-5">
                   <div className="space-y-1.5">
-                    <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">שם מלא *</label>
+                    <label className="text-xs font-bold uppercase tracking-widest" style={{ color: t.textSub }}>שם מלא *</label>
                     <input
                       type="text"
                       value={form.customer_name}
                       onChange={e => updateField('customer_name', e.target.value)}
-                      className={`w-full h-12 bg-surface-container-low rounded-lg px-4 text-on-surface font-body focus:outline-none focus:ring-2 focus:ring-primary ${errors.customer_name ? 'ring-2 ring-error' : ''}`}
+                      className={`w-full h-12 rounded-lg px-4 font-body focus:outline-none focus:ring-2 border`}
+                      style={{ background: t.bgCard, borderColor: t.border, color: t.text, '--tw-ring-color': t.accent }}
                       placeholder="ישראל ישראלי"
                     />
-                    {errors.customer_name && <p className="text-error text-xs">{errors.customer_name}</p>}
+                    {errors.customer_name && <p className="text-red-500 text-xs">{errors.customer_name}</p>}
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">דוא"ל *</label>
+                      <label className="text-xs font-bold uppercase tracking-widest" style={{ color: t.textSub }}>דוא"ל *</label>
                       <input
                         type="email"
                         value={form.customer_email}
                         onChange={e => updateField('customer_email', e.target.value)}
-                        className={`w-full h-12 bg-surface-container-low rounded-lg px-4 text-on-surface font-body focus:outline-none focus:ring-2 focus:ring-primary ${errors.customer_email ? 'ring-2 ring-error' : ''}`}
+                        className={`w-full h-12 rounded-lg px-4 font-body focus:outline-none focus:ring-2 border`}
+                        style={{ background: t.bgCard, borderColor: t.border, color: t.text, '--tw-ring-color': t.accent }}
                         placeholder="israel@example.com"
                       />
-                      {errors.customer_email && <p className="text-error text-xs">{errors.customer_email}</p>}
+                      {errors.customer_email && <p className="text-red-500 text-xs">{errors.customer_email}</p>}
                     </div>
                     <div className="space-y-1.5">
-                      <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">טלפון</label>
+                      <label className="text-xs font-bold uppercase tracking-widest" style={{ color: t.textSub }}>טלפון</label>
                       <input
                         type="tel"
                         value={form.customer_phone}
                         onChange={e => updateField('customer_phone', e.target.value)}
-                        className="w-full h-12 bg-surface-container-low rounded-lg px-4 text-on-surface font-body focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="w-full h-12 rounded-lg px-4 font-body focus:outline-none focus:ring-2 border"
+                        style={{ background: t.bgCard, borderColor: t.border, color: t.text, '--tw-ring-color': t.accent }}
                         placeholder="050-000-0000"
                         dir="ltr"
                       />
@@ -284,20 +292,19 @@ export default function Checkout() {
               </div>
 
               {/* Payment Methods */}
-              <div className="bg-surface-container-lowest rounded-xl p-6 md:p-8 shadow-monolith border border-outline-variant/10">
-                <h2 className="font-headline text-xl font-bold mb-7 flex items-center gap-2 text-on-surface">
-                  <span className="material-symbols-outlined text-primary">payments</span>
+              <div className="rounded-xl p-6 md:p-8 border shadow-sm" style={{ background: t.bgCard, borderColor: t.border }}>
+                <h2 className="font-headline text-xl font-bold mb-7 flex items-center gap-2" style={{ color: t.text }}>
+                  <span className="material-symbols-outlined" style={{ color: t.accent }}>payments</span>
                   בחירת אמצעי תשלום
                 </h2>
                 <div className="space-y-3">
                   {PAYMENT_METHODS.map(method => (
                     <label
                       key={method.id}
-                      className={`relative flex items-center justify-between p-4 md:p-5 rounded-lg cursor-pointer transition-all ${
-                        paymentMethod === method.id
-                          ? 'border-2 border-primary bg-primary/5'
-                          : 'border border-outline-variant/30 hover:border-primary/50 bg-surface'
-                      }`}
+                      className="relative flex items-center justify-between p-4 md:p-5 rounded-lg cursor-pointer transition-all border"
+                      style={paymentMethod === method.id 
+                        ? { borderColor: t.accent, background: t.accentSubtle } 
+                        : { borderColor: t.border, background: t.bgCard }}
                     >
                       <input
                         type="radio"
@@ -309,14 +316,14 @@ export default function Checkout() {
                       />
                       <div className="flex items-center gap-4">
                         <method.icon />
-                        <div>
-                          <p className="font-bold text-on-surface">{method.label}</p>
-                          <p className="text-xs text-on-surface-variant">{method.desc}</p>
+                        <div className="text-right">
+                          <p className="font-bold" style={{ color: t.text }}>{method.label}</p>
+                          <p className="text-xs" style={{ color: t.textMuted }}>{method.desc}</p>
                         </div>
                       </div>
                       <span
-                        className={`material-symbols-outlined ${paymentMethod === method.id ? 'text-primary' : 'text-outline-variant'}`}
-                        style={paymentMethod === method.id ? { fontVariationSettings: "'FILL' 1" } : {}}
+                        className="material-symbols-outlined"
+                        style={{ color: paymentMethod === method.id ? t.accent : t.textMuted, fontVariationSettings: paymentMethod === method.id ? "'FILL' 1" : "" }}
                       >
                         {paymentMethod === method.id ? 'check_circle' : 'radio_button_unchecked'}
                       </span>
@@ -326,17 +333,17 @@ export default function Checkout() {
               </div>
 
               {/* Security badge */}
-              <div className="flex items-center justify-between p-5 md:p-6 bg-surface-container-low/50 rounded-xl border border-outline-variant/10">
-                <div className="flex items-center gap-4">
-                  <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center text-primary shadow-sm">
+              <div className="flex items-center justify-between p-5 md:p-6 rounded-xl border" style={{ background: t.bgCard, borderColor: t.border }}>
+                <div className="flex items-center gap-4 text-right">
+                  <div className="w-12 h-12 rounded-full flex items-center justify-center shadow-sm" style={{ background: t.bgAlt, color: t.accent }}>
                     <span className="material-symbols-outlined text-2xl" style={{ fontVariationSettings: "'FILL' 1" }}>verified_user</span>
                   </div>
                   <div>
-                    <h3 className="font-bold text-on-surface">תשלום בטוח ומאובטח</h3>
-                    <p className="text-sm text-on-surface-variant">הנתונים שלך מוצפנים בתקן SSL המחמיר ביותר</p>
+                    <h3 className="font-bold" style={{ color: t.text }}>תשלום בטוח ומאובטח</h3>
+                    <p className="text-sm" style={{ color: t.textMuted }}>הנתונים שלך מוצפנים בתקן SSL המחמיר ביותר</p>
                   </div>
                 </div>
-                <div className="hidden sm:flex items-center gap-2 text-on-surface-variant/40">
+                <div className="hidden sm:flex items-center gap-2" style={{ color: t.textMuted }}>
                   <span className="material-symbols-outlined text-sm">lock</span>
                   <span className="text-xs font-bold uppercase tracking-widest">PCI-DSS</span>
                 </div>
@@ -346,7 +353,10 @@ export default function Checkout() {
               <button
                 type="submit"
                 disabled={submitting}
-                className="btn-primary w-full py-5 text-xl flex items-center justify-center gap-3 disabled:opacity-60"
+                className="w-full py-5 text-xl flex items-center justify-center gap-3 rounded-lg border-0 font-bold transition-all duration-200 cursor-pointer disabled:opacity-60"
+                style={{ background: t.accent, color: t.accentText }}
+                onMouseEnter={e => e.currentTarget.style.background = t.accentHover}
+                onMouseLeave={e => e.currentTarget.style.background = t.accent}
               >
                 {submitting ? (
                   <>
@@ -363,10 +373,10 @@ export default function Checkout() {
             </section>
 
             {/* Order Summary */}
-            <aside className="lg:col-span-5 order-2 lg:order-1 sticky top-28">
-              <div className="bg-surface-container-low rounded-xl overflow-hidden border border-outline-variant/10">
+            <aside className="lg:col-span-5 order-2 lg:order-1 lg:sticky top-28">
+              <div className="rounded-xl overflow-hidden border" style={{ background: t.bgCard, borderColor: t.border }}>
                 <div className="p-6 md:p-8">
-                  <h2 className="font-headline text-2xl font-black mb-7 border-b border-outline-variant/15 pb-4">
+                  <h2 className="font-headline text-2xl font-black mb-7 border-b pb-4 text-right" style={{ color: t.text, borderColor: t.border }}>
                     סיכום הזמנה
                   </h2>
 
@@ -394,34 +404,34 @@ export default function Checkout() {
                   </div>
 
                   {/* Cost breakdown */}
-                  <div className="space-y-3 font-body">
-                    <div className="flex justify-between items-center text-on-surface-variant">
-                      <span>סכום ביניים</span>
+                  <div className="space-y-3 font-body text-right">
+                    <div className="flex justify-between items-center" style={{ color: t.textSub }}>
                       <span className="font-semibold">₪{subtotal.toFixed(2)}</span>
+                      <span>סכום ביניים</span>
                     </div>
                     {discount > 0 && (
                       <div className="flex justify-between items-center text-green-600">
-                        <span>הנחה (קופון)</span>
                         <span className="font-semibold">−₪{discount.toFixed(2)}</span>
+                        <span>הנחה (קופון)</span>
                       </div>
                     )}
-                    <div className="flex justify-between items-center text-on-surface-variant">
+                    <div className="flex justify-between items-center" style={{ color: t.textSub }}>
+                      <span className={shipping === 0 ? 'font-bold' : 'font-semibold'} style={{ color: shipping === 0 ? t.accent : t.textSub }}>
+                        {shipping === 0 ? 'חינם' : `₪${shipping}`}
+                      </span>
                       <span className="flex items-center gap-1">
                         משלוח
                         <span className="material-symbols-outlined text-sm">info</span>
                       </span>
-                      <span className={shipping === 0 ? 'text-primary font-bold' : 'font-semibold'}>
-                        {shipping === 0 ? 'חינם' : `₪${shipping}`}
-                      </span>
                     </div>
 
-                    <div className="pt-5 mt-5 border-t border-outline-variant/20">
+                    <div className="pt-5 mt-5 border-t" style={{ borderColor: t.border }}>
                       <div className="flex justify-between items-baseline">
-                        <span className="font-headline text-xl font-extrabold">סה&quot;כ לתשלום</span>
                         <div className="text-right">
-                          <span className="text-3xl font-headline font-black text-primary">₪{total.toFixed(2)}</span>
-                          <p className="text-[10px] text-on-surface-variant">כולל דמי משלוח</p>
+                          <span className="text-3xl font-headline font-black" style={{ color: t.accent }}>₪{total.toFixed(2)}</span>
+                          <p className="text-[10px]" style={{ color: t.textMuted }}>כולל דמי משלוח</p>
                         </div>
+                        <span className="font-headline text-xl font-extrabold" style={{ color: t.text }}>סה&quot;כ לתשלום</span>
                       </div>
                     </div>
                   </div>
@@ -433,25 +443,30 @@ export default function Checkout() {
                         type="text"
                         value={promoCode}
                         onChange={e => setPromoCode(e.target.value)}
-                        className="flex-1 h-10 bg-surface-container-lowest border border-outline-variant/30 rounded-lg px-4 focus:ring-1 focus:ring-primary text-sm text-on-surface"
+                        className="flex-1 h-10 border rounded-lg px-4 focus:ring-1 focus:outline-none text-sm"
+                        style={{ background: t.bgCard, borderColor: t.border, color: t.text, '--tw-ring-color': t.accent }}
                         placeholder="קוד קופון"
                       />
                       <button
                         type="button"
                         onClick={applyPromo}
-                        className="px-5 py-2 bg-inverse-surface text-inverse-on-surface rounded-lg font-bold text-sm hover:opacity-90 transition-opacity"
+                        className="px-5 py-2 text-white rounded-lg font-bold text-sm hover:opacity-90 transition-opacity cursor-pointer border-0"
+                        style={{ background: t.accent }}
                       >
                         החל
                       </button>
                     </div>
-                    {promoError && <p className="text-error text-xs mt-1.5">{promoError}</p>}
+                    {promoError && <p className="text-red-500 text-xs mt-1.5">{promoError}</p>}
                     {discount > 0 && <p className="text-green-600 text-xs mt-1.5 font-bold">✓ קופון הוחל בהצלחה!</p>}
                   </div>
                 </div>
 
-                <div className="bg-secondary-fixed p-5 flex items-center justify-center gap-2 text-on-secondary-fixed border-t border-outline-variant/10">
+                <div 
+                  className="p-5 flex items-center justify-center gap-2 border-t text-sm font-semibold"
+                  style={{ background: t.bgAlt, borderColor: t.border, color: t.textSub }}
+                >
                   <span className="material-symbols-outlined">local_shipping</span>
-                  <span className="font-semibold text-sm">זמן אספקה משוער: 5-7 ימי עסקים</span>
+                  <span>זמן אספקה משוער: 5-7 ימי עסקים</span>
                 </div>
               </div>
             </aside>
@@ -461,20 +476,20 @@ export default function Checkout() {
 
       {outOfStock && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-surface rounded-2xl p-8 max-w-md w-full text-center shadow-2xl relative border border-outline-variant/20">
-            <button onClick={() => setOutOfStock(false)} className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface">
+          <div className="rounded-2xl p-8 max-w-md w-full text-center shadow-2xl relative border" style={{ background: t.bgCard, borderColor: t.border }}>
+            <button onClick={() => setOutOfStock(false)} className="absolute top-4 right-4 text-on-surface-variant hover:text-on-surface" style={{ color: t.textSub }}>
               <span className="material-symbols-outlined">close</span>
             </button>
-            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-error/10 flex items-center justify-center">
-              <span className="material-symbols-outlined text-3xl text-error">inventory_2</span>
+            <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-red-100 flex items-center justify-center">
+              <span className="material-symbols-outlined text-3xl text-red-600">inventory_2</span>
             </div>
-            <h2 className="font-headline font-bold text-2xl text-on-surface mb-2">אוי לא, המלאי אזל!</h2>
-            <p className="text-on-surface-variant mb-6">
+            <h2 className="font-headline font-bold text-2xl mb-2" style={{ color: t.text }}>אוי לא, המלאי אזל!</h2>
+            <p className="mb-6" style={{ color: t.textSub }}>
               המוצר כרגע חסר במלאי עקב ביקוש גבוה.
               השאירו מייל ונודיע לכם מיד כשהוא יחזור:
             </p>
             {waitlistSuccess ? (
-              <div className="bg-success/10 text-success font-bold py-4 rounded-xl border border-success/20">
+              <div className="text-green-700 bg-green-100 font-bold py-4 rounded-xl border border-green-200">
                 נרשמת בהצלחה! נעדכן אותך בקרוב.
               </div>
             ) : (
@@ -485,9 +500,15 @@ export default function Checkout() {
                   onChange={e => setWaitlistEmail(e.target.value)}
                   placeholder="האימייל שלך"
                   required
-                  className="w-full h-12 bg-surface-container-low rounded-xl px-4 text-on-surface border border-outline-variant/30 focus:border-primary focus:outline-none"
+                  className="w-full h-12 rounded-xl px-4 border focus:outline-none"
+                  style={{ background: t.bgCard, borderColor: t.border, color: t.text, '--tw-ring-color': t.accent }}
                 />
-                <button type="submit" disabled={submitting} className="btn-primary w-full py-3.5">
+                <button 
+                  type="submit" 
+                  disabled={submitting} 
+                  className="w-full py-3.5 border-0 font-bold text-white rounded-xl transition-all cursor-pointer"
+                  style={{ background: t.accent }}
+                >
                   {submitting ? 'שולח...' : 'הודיעו לי שחוזר למלאי'}
                 </button>
               </form>

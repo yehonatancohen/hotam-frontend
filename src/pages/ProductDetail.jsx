@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { useTheme } from '../context/ThemeContext'
 
 const API = import.meta.env.VITE_API_URL
 const STATIC_BASE = import.meta.env.VITE_STATIC_BASE
@@ -43,6 +44,7 @@ export default function ProductDetail() {
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
   const [relatedProducts, setRelatedProducts] = useState([])
+  const { theme: t } = useTheme()
 
   useEffect(() => {
     axios.get(`${API}/products/${productId}`)
@@ -64,11 +66,11 @@ export default function ProductDetail() {
     document.title = `${product.name_he} – חריטת לייזר אישית | חותם`
     const metaDesc = document.querySelector('meta[name="description"]')
     if (metaDesc) metaDesc.setAttribute('content', desc)
-    // Canonical
+    
     let canonical = document.querySelector('link[rel="canonical"]')
     if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.appendChild(canonical) }
     canonical.href = `${SITE_URL}/products/${productId}`
-    // OG
+    
     const ogTitle = document.querySelector('meta[property="og:title"]')
     const ogDesc = document.querySelector('meta[property="og:description"]')
     const ogImg = document.querySelector('meta[property="og:image"]')
@@ -77,7 +79,7 @@ export default function ProductDetail() {
     if (ogDesc) ogDesc.setAttribute('content', desc)
     if (ogImg) ogImg.setAttribute('content', imgSrc(product))
     if (ogUrl) ogUrl.setAttribute('content', `${SITE_URL}/products/${productId}`)
-    // Product + Breadcrumb JSON-LD
+    
     const existing = document.getElementById('product-schema')
     if (existing) existing.remove()
     const script = document.createElement('script')
@@ -126,17 +128,23 @@ export default function ProductDetail() {
   if (loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <span className="animate-spin material-symbols-outlined text-4xl text-primary">autorenew</span>
+        <span className="animate-spin material-symbols-outlined text-4xl" style={{ color: t.accent }}>autorenew</span>
       </div>
     )
   }
 
   if (!product) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center text-center px-4">
+      <div className="min-h-[60vh] flex items-center justify-center text-center px-4" style={{ background: t.bg, color: t.text }}>
         <div>
-          <h2 className="font-headline font-bold text-2xl text-on-surface mb-4">המוצר לא נמצא</h2>
-          <Link to="/products" className="btn-primary px-8 py-3 inline-block">חזרה למוצרים</Link>
+          <h2 className="font-headline font-bold text-2xl mb-4">המוצר לא נמצא</h2>
+          <Link 
+            to="/products" 
+            className="px-8 py-3 rounded-lg font-bold text-base inline-block"
+            style={{ background: t.accent, color: t.accentText }}
+          >
+            חזרה למוצרים
+          </Link>
         </div>
       </div>
     )
@@ -157,15 +165,15 @@ export default function ProductDetail() {
   }
 
   return (
-    <div>
+    <div dir="rtl" className="transition-colors duration-300" style={{ background: t.bg, color: t.text }}>
       {/* Breadcrumb */}
       <div className="px-6 md:px-8 pt-8 pb-0 max-w-7xl mx-auto">
-        <nav className="flex items-center gap-2 text-sm text-on-surface-variant">
-          <Link to="/" className="hover:text-primary transition-colors">ראשי</Link>
+        <nav className="flex items-center gap-2 text-sm" style={{ color: t.textSub }}>
+          <Link to="/" className="transition-colors" onMouseEnter={e => e.currentTarget.style.color = t.text} onMouseLeave={e => e.currentTarget.style.color = t.textSub}>ראשי</Link>
           <span className="material-symbols-outlined text-sm">chevron_left</span>
-          <Link to="/products" className="hover:text-primary transition-colors">מוצרים</Link>
+          <Link to="/products" className="transition-colors" onMouseEnter={e => e.currentTarget.style.color = t.text} onMouseLeave={e => e.currentTarget.style.color = t.textSub}>מוצרים</Link>
           <span className="material-symbols-outlined text-sm">chevron_left</span>
-          <span className="text-on-surface">{product.name_he}</span>
+          <span style={{ color: t.text }}>{product.name_he}</span>
         </nav>
       </div>
 
@@ -174,34 +182,44 @@ export default function ProductDetail() {
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
           {/* Left: image */}
           <div className="relative">
-            <div className="aspect-square rounded-2xl overflow-hidden bg-surface-container-low shadow-monolith">
+            <div 
+              className="aspect-square rounded-2xl overflow-hidden shadow-lg border"
+              style={{ background: t.bgAlt, borderColor: t.border, boxShadow: t.shadow }}
+            >
               <img
                 src={imgSrc(product)}
                 alt={product.name_he}
-                className="w-full h-full object-cover"
+                className="w-full h-full object-contain mix-blend-multiply bg-[#FAF8F5]"
               />
             </div>
             {/* Category badge */}
-            <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-label font-bold text-on-surface shadow">
+            <div 
+              className="absolute top-4 right-4 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-label font-bold shadow"
+              style={{ background: t.bgCard, color: t.text }}
+            >
               {CATEGORY_LABELS[product.category] || product.category}
             </div>
           </div>
 
           {/* Right: info + CTA */}
-          <div className="flex flex-col">
-            <h1 className="font-headline font-black text-4xl md:text-5xl text-on-surface tracking-tight mb-4">
+          <div className="flex flex-col text-right">
+            <h1 className="font-headline font-black text-4xl md:text-5xl tracking-tight mb-4" style={{ color: t.text }}>
               {product.name_he}
             </h1>
-            <p className="text-on-surface-variant text-lg leading-relaxed mb-8 font-light">
+            <p className="text-lg leading-relaxed mb-8 font-light" style={{ color: t.textSub }}>
               {product.description_he || product.description}
             </p>
 
             {/* Features */}
             <div className="grid grid-cols-2 gap-3 mb-8">
               {features.map((f, i) => (
-                <div key={i} className="flex items-center gap-2.5 bg-surface-container-low rounded-lg px-3 py-2.5">
-                  <span className="material-symbols-outlined text-primary text-base" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                  <span className="text-sm text-on-surface font-label">{f}</span>
+                <div 
+                  key={i} 
+                  className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 border"
+                  style={{ background: t.bgCard, borderColor: t.border }}
+                >
+                  <span className="material-symbols-outlined text-base" style={{ color: t.accent, fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+                  <span className="text-sm font-label" style={{ color: t.textSub }}>{f}</span>
                 </div>
               ))}
             </div>
@@ -209,27 +227,30 @@ export default function ProductDetail() {
             {/* Materials preview */}
             {product.materials && (
               <div className="mb-8">
-                <div className="text-xs font-bold text-on-surface-variant uppercase tracking-widest mb-2">חומרים זמינים</div>
-                <p className="text-on-surface font-body">{product.materials}</p>
+                <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: t.textMuted }}>חומרים זמינים</div>
+                <p className="font-body" style={{ color: t.textSub }}>{product.materials}</p>
               </div>
             )}
 
             {/* Price + CTA */}
-            <div className="bg-surface-container-low rounded-xl p-6 border border-outline-variant/10">
+            <div className="rounded-xl p-6 border" style={{ background: t.bgCard, borderColor: t.border, boxShadow: t.shadow }}>
               <div className="flex items-baseline justify-between mb-5">
                 <div>
-                  <div className="text-xs text-on-surface-variant mb-0.5">מחיר מתחיל מ</div>
-                  <div className="font-headline font-black text-4xl text-primary">₪{product.price}</div>
-                  <div className="text-xs text-on-surface-variant mt-0.5">כולל מע"מ ומשלוח</div>
+                  <div className="text-xs mb-0.5" style={{ color: t.textMuted }}>מחיר מתחיל מ</div>
+                  <div className="font-headline font-black text-4xl" style={{ color: t.accent }}>₪{product.price}</div>
+                  <div className="text-xs mt-0.5" style={{ color: t.textMuted }}>כולל מע"מ ומשלוח</div>
                 </div>
-                <div className="flex items-center gap-1.5 text-on-surface-variant text-sm">
+                <div className="flex items-center gap-1.5 text-sm" style={{ color: t.textSub }}>
                   <span className="material-symbols-outlined text-base">local_shipping</span>
                   {product.production_time || '5–7 ימי עסקים'}
                 </div>
               </div>
               <button
                 onClick={() => navigate(`/customizer/${product.id}`)}
-                className="btn-primary w-full py-4 text-xl flex items-center justify-center gap-3"
+                className="w-full py-4 text-xl flex items-center justify-center gap-3 rounded-lg border-0 font-bold transition-all duration-200"
+                style={{ background: t.accent, color: t.accentText }}
+                onMouseEnter={e => { e.currentTarget.style.background = t.accentHover; e.currentTarget.style.transform = 'translateY(-1px)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = t.accent; e.currentTarget.style.transform = '' }}
               >
                 <span className="material-symbols-outlined">edit</span>
                 התאמה אישית והזמנה
@@ -237,15 +258,15 @@ export default function ProductDetail() {
             </div>
 
             {/* Trust signals */}
-            <div className="flex flex-wrap gap-4 mt-5 text-on-surface-variant text-xs">
+            <div className="flex flex-wrap gap-4 mt-5 text-xs" style={{ color: t.textMuted }}>
               {[
                 { icon: 'lock', label: 'תשלום מאובטח' },
                 { icon: 'replay', label: 'החזרה בתוך 30 יום' },
                 { icon: 'verified', label: 'מוצר מקורי מהסטודיו' },
-              ].map(t => (
-                <div key={t.label} className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-sm">{t.icon}</span>
-                  {t.label}
+              ].map(ts => (
+                <div key={ts.label} className="flex items-center gap-1.5">
+                  <span className="material-symbols-outlined text-sm">{ts.icon}</span>
+                  {ts.label}
                 </div>
               ))}
             </div>
@@ -255,26 +276,38 @@ export default function ProductDetail() {
 
       {/* Related products */}
       {relatedProducts.length > 0 && (
-        <section className="py-16 px-6 md:px-8 bg-surface-container-low">
+        <section className="py-16 px-6 md:px-8 transition-colors duration-300" style={{ background: t.bgAlt, borderTop: `1px solid ${t.border}` }}>
           <div className="max-w-7xl mx-auto">
-            <h2 className="font-headline font-extrabold text-3xl text-on-surface mb-8 tracking-tight">מוצרים נוספים</h2>
+            <h2 className="font-headline font-extrabold text-3xl mb-8 tracking-tight" style={{ color: t.text }}>מוצרים נוספים</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               {relatedProducts.map(p => (
                 <Link
                   key={p.id}
                   to={`/products/${p.id}`}
-                  className="group bg-surface-container-lowest rounded-xl overflow-hidden border border-outline-variant/10 hover:shadow-monolith transition-all"
+                  className="group rounded-xl overflow-hidden border transition-all"
+                  style={{
+                    background: t.bgCard,
+                    borderColor: t.border,
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = t.borderStrong;
+                    e.currentTarget.style.boxShadow = t.shadow;
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = t.border;
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
                 >
-                  <div className="aspect-video overflow-hidden">
+                  <div className="aspect-video overflow-hidden bg-white/50">
                     <img
                       src={imgSrc(p)}
                       alt={p.name_he}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
                     />
                   </div>
-                  <div className="p-5">
-                    <h3 className="font-headline font-bold text-on-surface group-hover:text-primary transition-colors mb-1">{p.name_he}</h3>
-                    <span className="text-primary font-headline font-bold">₪{p.price}</span>
+                  <div className="p-5 text-right">
+                    <h3 className="font-headline font-bold mb-1 transition-colors group-hover:text-primary" style={{ color: t.text }}>{p.name_he}</h3>
+                    <span className="font-headline font-bold" style={{ color: t.accent }}>₪{p.price}</span>
                   </div>
                 </Link>
               ))}

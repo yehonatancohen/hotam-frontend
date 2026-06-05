@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useCart } from '../context/CartContext'
+import { useTheme } from '../context/ThemeContext'
 
 const NAV = [
   { label: 'ראשי',    href: '/', hash: null,      matchPath: (p) => p === '/', matchHash: null },
@@ -17,9 +18,18 @@ function smoothScrollTo(id) {
 export default function Navbar() {
   const [menuOpen, setMenuOpen] = useState(false)
   const [activeHash, setActiveHash] = useState(null)
+  const [scrolled, setScrolled] = useState(false)
   const location = useLocation()
   const navigate = useNavigate()
   const { cartItem } = useCart()
+  const { theme: t } = useTheme()
+
+  // Track scroll position
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 50)
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
 
   // Track which section is in view when on the home page
   useEffect(() => {
@@ -56,7 +66,6 @@ export default function Navbar() {
     setMenuOpen(false)
 
     if (link.hash) {
-      // Hash section — navigate to home first if needed, then scroll
       if (location.pathname === '/') {
         smoothScrollTo(link.hash)
       } else {
@@ -67,7 +76,6 @@ export default function Navbar() {
     }
 
     if (link.href === '/') {
-      // "ראשי" — scroll to top without full reload
       if (location.pathname === '/') {
         window.scrollTo({ top: 0, behavior: 'smooth' })
       } else {
@@ -80,7 +88,14 @@ export default function Navbar() {
   }
 
   return (
-    <nav className="bg-surface/90 glass-nav sticky top-0 z-50 border-b border-outline-variant/20 shadow-sm">
+    <nav 
+      className="sticky top-0 z-50 transition-all duration-350"
+      style={{
+        background: scrolled ? t.navBg : 'transparent',
+        borderBottom: scrolled ? `1px solid ${t.border}` : 'none',
+        backdropFilter: scrolled ? 'blur(18px)' : 'none',
+      }}
+    >
       <div className="flex flex-row-reverse justify-between items-center w-full px-6 md:px-8 py-3 max-w-full">
 
         {/* Logo */}
@@ -97,45 +112,60 @@ export default function Navbar() {
           <img
             src="/logo.png"
             alt="חותם - סטודיו לייזר"
-            className="h-9 w-auto object-contain group-hover:opacity-80 transition-opacity"
+            className="h-9 w-auto object-contain transition-all"
+            style={t.id === 'dark' ? { filter: 'brightness(0) invert(1) opacity(0.9)' } : {}}
           />
         </Link>
 
         {/* Desktop Nav */}
         <div className="hidden md:flex flex-row-reverse items-center gap-8">
-          {NAV.map(link => (
-            <a
-              key={link.label}
-              href={link.hash ? `#${link.hash}` : link.href}
-              onClick={(e) => handleClick(link, e)}
-              className={`font-headline font-bold text-sm tracking-tight transition-all duration-200 cursor-pointer select-none ${
-                isActive(link)
-                  ? 'text-primary border-b-2 border-primary pb-0.5'
-                  : 'text-on-surface/70 hover:text-primary'
-              }`}
-            >
-              {link.label}
-            </a>
-          ))}
+          {NAV.map(link => {
+            const active = isActive(link)
+            return (
+              <a
+                key={link.label}
+                href={link.hash ? `#${link.hash}` : link.href}
+                onClick={(e) => handleClick(link, e)}
+                className="font-headline font-bold text-sm tracking-tight transition-all duration-200 cursor-pointer select-none pb-0.5"
+                style={{
+                  color: active ? t.accent : t.textSub,
+                  borderBottom: active ? `2px solid ${t.accent}` : '2px solid transparent',
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = t.text}
+                onMouseLeave={e => e.currentTarget.style.color = active ? t.accent : t.textSub}
+              >
+                {link.label}
+              </a>
+            )
+          })}
         </div>
 
         {/* Cart + mobile toggle */}
         <div className="flex items-center gap-3">
           <button
             onClick={() => cartItem ? navigate('/checkout') : navigate('/products')}
-            className="relative p-2 rounded-full hover:bg-surface-container-high text-primary transition-colors"
+            className="relative p-2 rounded-full transition-all duration-200"
+            style={{ color: t.accent }}
+            onMouseEnter={e => e.currentTarget.style.background = t.accentSubtle}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             aria-label="עגלת קניות"
           >
             <span className="material-symbols-outlined text-2xl">shopping_bag</span>
             {cartItem && (
-              <span className="absolute -top-0.5 -left-0.5 w-4 h-4 bg-primary text-white text-[9px] font-bold rounded-full flex items-center justify-center">
+              <span 
+                className="absolute -top-0.5 -left-0.5 w-4 h-4 text-[9px] font-bold rounded-full flex items-center justify-center animate-pulse"
+                style={{ background: t.accent, color: t.accentText }}
+              >
                 1
               </span>
             )}
           </button>
 
           <button
-            className="md:hidden p-2 rounded-full hover:bg-surface-container-high text-on-surface"
+            className="md:hidden p-2 rounded-full"
+            style={{ color: t.text }}
+            onMouseEnter={e => e.currentTarget.style.background = t.accentSubtle}
+            onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
             onClick={() => setMenuOpen(!menuOpen)}
             aria-label="תפריט"
           >
@@ -146,21 +176,32 @@ export default function Navbar() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden bg-surface-container-low border-t border-outline-variant/15 px-6 py-2">
-          {NAV.map(link => (
-            <a
-              key={link.label}
-              href={link.hash ? `#${link.hash}` : link.href}
-              onClick={(e) => handleClick(link, e)}
-              className={`block font-headline font-bold text-base py-3.5 border-b border-outline-variant/10 last:border-0 cursor-pointer transition-colors text-right ${
-                isActive(link) ? 'text-primary' : 'text-on-surface/80 hover:text-primary'
-              }`}
-            >
-              {link.label}
-            </a>
-          ))}
+        <div 
+          className="md:hidden border-t px-6 py-2 transition-colors duration-300"
+          style={{ background: t.bgCard, borderColor: t.border }}
+        >
+          {NAV.map(link => {
+            const active = isActive(link)
+            return (
+              <a
+                key={link.label}
+                href={link.hash ? `#${link.hash}` : link.href}
+                onClick={(e) => handleClick(link, e)}
+                className="block font-headline font-bold text-base py-3.5 border-b last:border-0 cursor-pointer transition-colors text-right"
+                style={{
+                  color: active ? t.accent : t.textSub,
+                  borderColor: t.border,
+                }}
+                onMouseEnter={e => e.currentTarget.style.color = t.text}
+                onMouseLeave={e => e.currentTarget.style.color = active ? t.accent : t.textSub}
+              >
+                {link.label}
+              </a>
+            )
+          })}
         </div>
       )}
     </nav>
   )
 }
+

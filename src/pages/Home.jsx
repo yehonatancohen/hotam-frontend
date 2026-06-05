@@ -1,18 +1,18 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
+import { useTheme } from '../context/ThemeContext'
 
 const API = import.meta.env.VITE_API_URL
 const STATIC_BASE = import.meta.env.VITE_STATIC_BASE
 
-// Curated Unsplash photos – laser/wood/craft theme
-const HERO_BG = 'https://images.unsplash.com/photo-1567538096630-e0c55bd6374c?w=1800&q=80&fit=crop'
 const PROCESS_IMGS = [
   'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=600&q=80&fit=crop',
   'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=600&q=80&fit=crop',
   'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=600&q=80&fit=crop',
 ]
-const PRODUCT_IMGS = {
+
+const PRODUCT_FALLBACK_IMGS = {
   drinkware: 'https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=600&q=80&fit=crop',
   accessories: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&q=80&fit=crop',
   signage: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=600&q=80&fit=crop',
@@ -20,41 +20,17 @@ const PRODUCT_IMGS = {
   gifts: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600&q=80&fit=crop',
   mixed: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=600&q=80&fit=crop',
 }
-const ABOUT_IMG = 'https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=900&q=80&fit=crop'
 
 const REVIEWS = [
-  {
-    name: 'מיכל ל.',
-    initials: 'מל',
-    color: 'bg-primary/20 text-primary',
-    stars: 5,
-    text: 'הזמנתי ארנק עור עם חריטה אישית לאבא שלי ליום הולדתו. הוא בכה כשפתח אותו. האיכות מדהימה, הפרטים מדויקים להפליא.',
-    product: 'ארנק עור',
-  },
-  {
-    name: 'יאיר ב.',
-    initials: 'יב',
-    color: 'bg-secondary/20 text-secondary',
-    stars: 5,
-    text: 'הזמנתי שילוט לחלל המשרד שלנו עם הלוגו של החברה. התוצאה הרבה מעבר לציפיות — נראה יוקרתי ומקצועי לחלוטין.',
-    product: 'שילוט אקריליק',
-  },
-  {
-    name: 'שירה מ.',
-    initials: 'שמ',
-    color: 'bg-primary/10 text-primary',
-    stars: 5,
-    text: 'שירות מהיר, תקשורת מצוינת, והמוצר הגיע עטוף יפה ושלם. הכוס התרמית עם השם נראית פשוט מושלמת.',
-    product: 'כוס תרמית',
-  },
-  {
-    name: 'רועי א.',
-    initials: 'רא',
-    color: 'bg-secondary/10 text-secondary',
-    stars: 5,
-    text: 'קניתי שעון עץ לסלון, החריטה האישית עליו הפכה אותו לפיסת אמנות. כולם שואלים מאיפה. ממליץ בחום!',
-    product: "שעון קיר 'מונולית'",
-  },
+  { name: 'מיכל ל.', role: 'לקוחה פרטית', q: 'הזמנתי לוח עץ עם שם הבן שלי לצד שישי. הגיע מוקדם, האריזה הייתה מושלמת. ממליצה בחום!' },
+  { name: 'רועי מ.', role: 'מנהל עסקי', q: 'הכנסנו מתנות מחורטות ללקוחות הגדולים שלנו. הרושם היה פנומנלי — אנשים עדיין מדברים על זה.' },
+  { name: 'שירה ד.', role: 'בעלת עסק', q: 'הזמנתי שלט לחנות. שירות מהיר, מחיר הוגן, תוצאה מדויקת בדיוק כמו שרציתי.' },
+]
+
+const STEPS = [
+  { n: '01', t: 'שולחים לנו רעיון', d: 'טקסט, לוגו, תמונה — גם רעיון גס מספיק. ניצור איתכם קשר ונחדד ביחד.' },
+  { n: '02', t: 'אנחנו מייצרים', d: 'כל פריט נוצר אחד לאחד על הלייזר שלנו, בדיוק מרבי ואהבה לפרטים.' },
+  { n: '03', t: 'מגיע אליכם', d: 'אריזה מוקפדת ומשלוח מהיר עד הדלת תוך 5-7 ימי עסקים.' },
 ]
 
 async function fetchWithRetry(url, retries = 4, delay = 3000) {
@@ -70,7 +46,10 @@ async function fetchWithRetry(url, retries = 4, delay = 3000) {
 
 export default function Home() {
   const [products, setProducts] = useState([])
-  const [showSticky, setShowSticky] = useState(false)
+  const { theme: t } = useTheme()
+  const [contactForm, setContactForm] = useState({ name: '', phone: '', type: '', desc: '' })
+  const [contactSent, setContactSent] = useState(false)
+  const [focusedField, setFocusedField] = useState(null)
 
   useEffect(() => {
     fetchWithRetry(`${API}/products`)
@@ -78,509 +57,404 @@ export default function Home() {
       .catch(() => setProducts([]))
   }, [])
 
-  useEffect(() => {
-    const onScroll = () => setShowSticky(window.scrollY > 300)
-    window.addEventListener('scroll', onScroll, { passive: true })
-    return () => window.removeEventListener('scroll', onScroll)
-  }, [])
+  const handleContactSubmit = (e) => {
+    e.preventDefault()
+    setContactSent(true)
+    setTimeout(() => {
+      setContactSent(false)
+      setContactForm({ name: '', phone: '', type: '', desc: '' })
+    }, 5000)
+  }
+
+  const inputStyle = (fieldName) => ({
+    width: '100%',
+    padding: '14px 18px',
+    borderRadius: 8,
+    border: `1.5px solid ${focusedField === fieldName ? t.accent : t.border}`,
+    background: t.bgCard,
+    color: t.text,
+    fontSize: 16,
+    fontFamily: 'Heebo, sans-serif',
+    outline: 'none',
+    transition: 'all 0.2s',
+    direction: 'rtl',
+  })
 
   return (
-    <div>
+    <div dir="rtl" className="transition-colors duration-300" style={{ background: t.bg, color: t.text }}>
+      
       {/* ── Hero ── */}
-      <section className="relative min-h-[95vh] flex items-center overflow-hidden bg-[#0a0704]">
-        {/* Background */}
-        <div className="absolute inset-0 z-0" style={{
-          background: [
-            'radial-gradient(ellipse 70% 80% at 80% 50%, rgba(180,100,20,0.22) 0%, transparent 65%)',
-            'radial-gradient(ellipse 50% 60% at 10% 80%, rgba(100,40,10,0.35) 0%, transparent 55%)',
-            'linear-gradient(150deg, #0a0704 0%, #140e06 55%, #0a0704 100%)',
-          ].join(', ')
-        }} />
-
-        <div className="container mx-auto px-6 md:px-8 relative z-10 py-20">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-16 items-center">
-
-            {/* Text — right side for RTL */}
-            <div className="text-right order-2 lg:order-1">
-              {/* Label */}
-              <div className="inline-flex items-center gap-2.5 bg-primary/15 border border-primary/25 rounded-full px-4 py-2 text-primary-fixed-dim text-sm font-semibold mb-8">
-                <span className="w-1.5 h-1.5 rounded-full bg-primary-fixed-dim animate-pulse-dot shrink-0" />
-                סטודיו לחריטת לייזר — ישראל
-              </div>
-
-              <h1 className="font-headline font-black text-5xl md:text-6xl xl:text-7xl text-white mb-6 leading-[1.05] hero-text-shadow">
-                לא מתנה —<br />
-                <span className="text-primary-fixed-dim">חותם.</span>
-              </h1>
-
-              <p className="font-body text-white/65 text-lg md:text-xl mb-10 max-w-lg leading-relaxed font-light">
-                חריטת לייזר על עץ, עור ומתכת. שם, תאריך, לוגו — כל פריט נולד פעם אחת, בדיוק בשבילך.
-              </p>
-
-              <div className="flex flex-col sm:flex-row-reverse gap-4 mb-10">
-                <Link to="/products" className="btn-primary px-10 py-4 text-lg text-center">
-                  עיצוב המוצר שלי
-                </Link>
-                <a
-                  href="#products"
-                  onClick={e => { e.preventDefault(); document.getElementById('products')?.scrollIntoView({ behavior: 'smooth' }) }}
-                  className="btn-ghost px-10 py-4 text-lg cursor-pointer text-center"
-                >
-                  ראה דוגמאות
-                </a>
-              </div>
-
-              {/* Stats */}
-              <div className="flex flex-row-reverse gap-8 text-right">
-                {[
-                  { num: '500+', label: 'לקוחות מרוצים' },
-                  { num: '100%', label: 'ייחודי לך' },
-                  { num: '5★', label: 'דירוג ממוצע' },
-                ].map(s => (
-                  <div key={s.num}>
-                    <div className="font-headline font-black text-2xl md:text-3xl text-white leading-none">{s.num}</div>
-                    <div className="text-white/40 text-xs mt-1">{s.label}</div>
-                  </div>
-                ))}
-              </div>
+      <section className="flex flex-col lg:flex-row min-h-[90vh] items-stretch">
+        {/* Text Panel */}
+        <div className="flex-1 lg:flex-[1.25] flex flex-col justify-center px-6 md:px-16 py-20 lg:pt-[120px] lg:pr-[15%] lg:pb-[80px] lg:pl-[48px]" style={{ background: t.bg }}>
+          <div className="max-w-2xl">
+            <div className="text-xs font-bold uppercase tracking-[0.2em] mb-6" style={{ color: t.accent }}>
+              חריטת לייזר · ישראל
             </div>
-
-            {/* Visual — product showcase */}
-            <div className="order-1 lg:order-2 relative flex items-center justify-center">
-              <div className="relative w-full max-w-md mx-auto">
-                {/* Main image */}
-                <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-white/10 aspect-square">
-                  <img
-                    src="/hero.jpg"
-                    alt="חריטת לייזר במכונת CNC"
-                    className="w-full h-full object-cover"
-                    style={{ filter: 'brightness(0.9) contrast(1.05)' }}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent" />
-
-                </div>
-
-                {/* Floating card — rating */}
-                <div className="absolute -bottom-5 -right-5 bg-surface-container-lowest/95 backdrop-blur-md rounded-2xl p-4 shadow-2xl border border-outline-variant/20">
-                  <div className="font-headline font-black text-3xl text-primary leading-none">4.9<span className="text-base font-body font-normal text-on-surface-variant"> ★</span></div>
-                  <div className="text-xs text-on-surface-variant mt-0.5">דירוג לקוחות</div>
-                </div>
-
-                {/* Floating card — handmade */}
-                <div className="absolute -top-5 -left-5 bg-surface-container-lowest/95 backdrop-blur-md rounded-2xl p-4 shadow-2xl border border-outline-variant/20">
-                  <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-primary text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>handyman</span>
-                    <div>
-                      <div className="font-headline font-bold text-on-surface text-sm leading-none">עבודת יד</div>
-                      <div className="text-xs text-on-surface-variant mt-0.5">כל פריט ייחודי</div>
-                    </div>
-                  </div>
-                </div>
-
-
-              </div>
+            <h1 
+              className="font-headline font-black mb-6 leading-[1.08] tracking-tight"
+              style={{ fontSize: 'clamp(44px, 5.2vw, 76px)', color: t.text }}
+            >
+              חריטה<br />שמשאירה<br />
+              <span style={{ color: t.accent }}>חותם</span>
+            </h1>
+            <p className="text-base md:text-lg mb-10 font-light leading-relaxed" style={{ color: t.textSub }}>
+              חריטת לייזר אישית על עץ, עור ומתכת. מתנות שאי אפשר לשכוח, שילוט עסקי ומיתוג ייחודי — כל פריט נוצר בדיוק רב.
+            </p>
+            <div className="flex flex-wrap gap-4 items-center">
+              <Link 
+                to="/products"
+                className="px-8 py-4 rounded-lg font-headline font-bold text-base text-center transition-all duration-200"
+                style={{ background: t.accent, color: t.accentText }}
+                onMouseEnter={e => { e.currentTarget.style.background = t.accentHover; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = t.accent; e.currentTarget.style.transform = '' }}
+              >
+                להזמנה אישית ←
+              </Link>
+              <a 
+                href="https://wa.me/972529488077" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-6 py-4 rounded-lg font-headline font-medium text-sm text-center border transition-all duration-200 flex items-center gap-2"
+                style={{ borderColor: t.borderStrong, color: t.text }}
+                onMouseEnter={e => { e.currentTarget.style.background = t.accentSubtle; e.currentTarget.style.transform = 'translateY(-2px)' }}
+                onMouseLeave={e => { e.currentTarget.style.background = 'transparent'; e.currentTarget.style.transform = '' }}
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+                </svg>
+                WhatsApp
+              </a>
             </div>
-
           </div>
         </div>
-
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2 text-white/20">
-          <div className="w-px h-10 bg-gradient-to-b from-white/30 to-transparent animate-float" />
+        
+        {/* Image Panel */}
+        <div className="flex-1 lg:flex-[0.75] relative overflow-hidden min-h-[350px] lg:min-h-0">
+          <img 
+            src="/hero.jpg" 
+            alt="לוח עץ מחורט" 
+            className="w-full h-full object-cover object-center display-block" 
+          />
+          {/* Desktop gradient fade overlay to blend with the text panel */}
+          <div 
+            className="hidden lg:block absolute inset-0 pointer-events-none"
+            style={{
+              background: `linear-gradient(to left, ${t.bg} 0%, transparent 60%)`
+            }}
+          />
+          <div 
+            className="absolute bottom-6 right-6 p-4 rounded-xl shadow-lg border text-right"
+            style={{ background: t.bgCard, borderColor: t.border, boxShadow: t.shadow }}
+          >
+            <div className="font-headline font-bold text-sm mb-1" style={{ color: t.text }}>מוצרים אישיים ומיתוג עסק</div>
+            <div className="text-xs font-light" style={{ color: t.textMuted }}>חריטת לייזר איכותית ומדויקת</div>
+          </div>
         </div>
       </section>
 
-      {/* ── Social Proof ── */}
-      <section className="py-20 bg-surface-container-low px-6 md:px-8">
+      {/* ── Stats Strip ── */}
+      <section 
+        className="py-12 px-6 md:px-16 grid grid-cols-2 md:grid-cols-4 gap-8 text-center border-t border-b transition-colors duration-300"
+        style={{ background: t.bgAlt, borderColor: t.border }}
+      >
+        {[
+          { v: '500+', l: 'פריטים מחורטים' },
+          { v: '100%', l: 'לקוחות מרוצים' },
+          { v: '5-7 ימים', l: 'משלוח מהיר עד הבית' },
+          { v: 'ייצור מקומי', l: 'עבודת יד מוקפדת' },
+        ].map(i => (
+          <div key={i.l}>
+            <div className="font-headline font-black text-3xl md:text-4xl mb-2" style={{ color: t.accent }}>{i.v}</div>
+            <div className="text-xs" style={{ color: t.textMuted }}>{i.l}</div>
+          </div>
+        ))}
+      </section>
+
+      {/* ── Products Section ── */}
+      <section id="products" className="py-24 px-6 md:px-16 transition-colors duration-300" style={{ background: t.bg }}>
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="font-headline font-extrabold text-3xl md:text-4xl text-on-surface tracking-tight mb-2">
-              מה אומרים הלקוחות שלנו
-            </h2>
+          <div className="text-center mb-16">
+            <span className="text-xs font-bold uppercase tracking-[0.18em] block mb-3" style={{ color: t.accent }}>מה אנחנו יוצרים</span>
+            <h2 className="font-headline font-extrabold text-3xl md:text-5xl" style={{ color: t.text }}>המוצרים שלנו</h2>
+            <p className="text-base md:text-lg max-w-xl mx-auto mt-4 font-light leading-relaxed" style={{ color: t.textSub }}>
+              בחר פריט והתחל לעצב אותו אישית בחנות שלנו עם מנוע ההתאמה המיוחד
+            </p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-            {REVIEWS.map((r, i) => (
-              <div key={i} className="bg-surface-container-lowest rounded-xl p-6 flex flex-col gap-4 border border-outline-variant/10 shadow-monolith">
-                <div className="flex items-center gap-3 flex-row-reverse">
-                  <div className={`w-10 h-10 rounded-full flex items-center justify-center font-headline font-bold text-sm shrink-0 ${r.color}`}>
-                    {r.initials}
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {products.map(p => {
+              const src = p.image_url
+                ? (p.image_url.startsWith('/') ? `${STATIC_BASE}${p.image_url}` : p.image_url)
+                : PRODUCT_FALLBACK_IMGS[p.category] || PRODUCT_FALLBACK_IMGS.mixed;
+
+              return (
+                <div 
+                  key={p.id}
+                  className="rounded-2xl border p-6 flex flex-col transition-all duration-300 group hover:-translate-y-1.5"
+                  style={{
+                    background: t.bgCard,
+                    borderColor: t.border,
+                    boxShadow: 'none',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.borderColor = t.borderStrong;
+                    e.currentTarget.style.boxShadow = t.shadow;
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.borderColor = t.border;
+                    e.currentTarget.style.boxShadow = 'none';
+                  }}
+                >
+                  <div className="w-full aspect-[4/3] rounded-lg overflow-hidden bg-white/50 mb-6 relative">
+                    <img 
+                      src={src} 
+                      alt={p.name_he} 
+                      className="w-full h-full object-cover group-hover:scale-103 transition-transform duration-500" 
+                    />
                   </div>
-                  <div className="text-right">
-                    <div className="font-headline font-bold text-on-surface text-sm">{r.name}</div>
-                    <div className="text-xs text-on-surface-variant">{r.product}</div>
+                  <div className="text-xs font-bold uppercase tracking-wider mb-2" style={{ color: t.accent }}>
+                    {p.category === 'drinkware' ? 'כלי שתייה' : p.category === 'accessories' ? 'אביזרים' : p.category === 'signage' ? 'שילוט' : p.category === 'home_decor' ? 'עיצוב הבית' : 'מתנות'}
+                  </div>
+                  <h3 className="font-headline font-bold text-xl mb-3" style={{ color: t.text }}>{p.name_he}</h3>
+                  <p className="text-sm font-light mb-6 flex-1 leading-relaxed" style={{ color: t.textSub }}>{p.description_he}</p>
+                  
+                  <div className="flex items-center justify-between mt-auto border-t pt-4" style={{ borderColor: t.border }}>
+                    <div className="text-right">
+                      <span className="text-[10px] block" style={{ color: t.textMuted }}>החל מ-</span>
+                      <span className="font-headline font-bold text-xl" style={{ color: t.accent }}>₪{p.price}</span>
+                    </div>
+                    <Link 
+                      to={`/products/${p.id}`}
+                      className="px-5 py-2.5 rounded-lg text-sm font-bold transition-all duration-200"
+                      style={{ background: t.accent, color: t.accentText }}
+                      onMouseEnter={e => e.currentTarget.style.background = t.accentHover}
+                      onMouseLeave={e => e.currentTarget.style.background = t.accent}
+                    >
+                      בחר מוצר
+                    </Link>
                   </div>
                 </div>
-                <div className="flex gap-0.5 justify-end">
-                  {[...Array(r.stars)].map((_, s) => <span key={s} className="text-yellow-400 text-base">★</span>)}
-                </div>
-                <p className="text-on-surface-variant text-sm leading-relaxed flex-1 text-right">"{r.text}"</p>
-              </div>
-            ))}
-          </div>
-          <div className="text-center mt-8 text-on-surface-variant font-semibold text-sm">
-            ⭐ 4.9/5 מתוך 120+ ביקורות מאומתות
+              )
+            })}
           </div>
         </div>
       </section>
 
       {/* ── How It Works ── */}
-      <section className="py-20 bg-surface px-6 md:px-8">
-        <div className="max-w-4xl mx-auto">
-          <h2 className="font-headline font-extrabold text-3xl md:text-4xl text-on-surface tracking-tight text-center mb-16">
-            איך זה עובד?
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-0 relative">
-            {/* Connecting line */}
-            <div className="hidden md:block absolute top-10 right-[16.67%] left-[16.67%] h-px bg-outline-variant/40" />
+      <section className="py-24 px-6 md:px-16 transition-colors duration-300" style={{ background: t.bgAlt }}>
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="text-xs font-bold uppercase tracking-[0.18em] block mb-3" style={{ color: t.accent }}>תהליך העבודה</span>
+            <h2 className="font-headline font-extrabold text-3xl md:text-5xl" style={{ color: t.text }}>איך זה עובד?</h2>
+          </div>
 
-            {[
-              { emoji: '📤', step: '01', title: 'שולחים עיצוב', text: 'תמונה, לוגו או טקסט — דרך האתר שלנו. אנחנו מטפלים בכל השאר.' },
-              { emoji: '✅', step: '02', title: 'מקבלים הצעה', text: 'תוך שעה, עם אישור מחיר ומועד אספקה. ללא הפתעות.' },
-              { emoji: '📦', step: '03', title: 'מקבלים הביתה', text: 'הפריט מגיע אליכם ארוז בקפידה, מוכן להענקה.' },
-            ].map((s, i) => (
-              <div key={i} className="flex flex-col items-center text-center px-6 relative">
-                <div className="w-20 h-20 bg-surface-container-low rounded-full flex items-center justify-center text-3xl mb-5 border-4 border-surface relative z-10 shadow-sm">
-                  <img src={`https://emojicdn.elk.sh/${s.emoji}?style=apple`} alt="emoji" className="w-8 h-8 object-contain" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 relative">
+            <div className="hidden md:block absolute top-10 right-[17%] left-[17%] h-px opacity-40" style={{ background: t.borderStrong }} />
+            {STEPS.map(s => (
+              <div key={s.n} className="text-center relative z-10">
+                <div 
+                  className="w-16 h-16 rounded-full flex items-center justify-center font-headline font-bold text-lg mb-6 mx-auto shadow-md"
+                  style={{ background: t.accent, color: t.accentText }}
+                >
+                  {s.n}
                 </div>
-                <div className="text-xs font-bold text-primary uppercase tracking-widest mb-2">{s.step}</div>
-                <h3 className="font-headline font-bold text-xl text-on-surface mb-3">{s.title}</h3>
-                <p className="text-on-surface-variant text-sm leading-relaxed">{s.text}</p>
+                <h3 className="font-headline font-bold text-xl mb-3" style={{ color: t.text }}>{s.t}</h3>
+                <p className="text-sm font-light leading-relaxed" style={{ color: t.textSub }}>{s.d}</p>
               </div>
             ))}
           </div>
-
-          <div className="text-center mt-12">
-            <Link to="/products" className="btn-primary inline-flex items-center gap-2 px-8 py-4 text-lg">
-              בחר מוצר עכשיו
-              <span className="material-symbols-outlined">arrow_back</span>
-            </Link>
-          </div>
         </div>
       </section>
 
-      {/* ── Process strip ── */}
-      <section className="py-12 bg-inverse-surface overflow-hidden">
-        <div className="flex gap-0 max-w-full">
-          {PROCESS_IMGS.map((src, i) => (
-            <div key={i} className="flex-1 min-h-[180px] overflow-hidden relative">
-              <img src={src} alt="" loading="lazy" className="w-full h-full object-cover opacity-60 hover:opacity-80 transition-opacity duration-500 hover:scale-105 transform" style={{ minHeight: 180 }} />
-              <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* ── Products Bento Grid ── */}
-      <section id="products" className="py-24 md:py-32 px-6 md:px-8 bg-surface scroll-mt-16">
+      {/* ── Testimonials ── */}
+      <section className="py-24 px-6 md:px-16 transition-colors duration-300" style={{ background: t.bg }}>
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row-reverse justify-between items-end mb-16 md:mb-20 gap-6">
-            <div className="max-w-2xl">
-              <h2 className="font-headline font-extrabold text-4xl md:text-5xl text-on-surface mb-4 tracking-tight">
-                קולקציית המוצרים
-              </h2>
-              <p className="text-on-surface-variant text-lg md:text-xl leading-relaxed font-light">
-                כל פריט נבחר בקפידה ומקבל זהות חדשה תחת קרן הלייזר. מהמתנה האישית המושלמת ועד למיתוג עסקי יוקרתי.
-              </p>
-            </div>
-            <div className="hidden md:block h-px flex-grow bg-outline-variant/30 mx-8 mb-3" />
-            <Link to="/products" className="text-primary font-bold flex items-center gap-2 group text-lg whitespace-nowrap">
-              לכל המוצרים
-              <span className="material-symbols-outlined group-hover:-translate-x-1 transition-transform">arrow_back</span>
-            </Link>
+          <div className="text-center mb-16">
+            <span className="text-xs font-bold uppercase tracking-[0.18em] block mb-3" style={{ color: t.accent }}>מה אומרים עלינו</span>
+            <h2 className="font-headline font-extrabold text-3xl md:text-5xl" style={{ color: t.text }}>ביקורות לקוחות</h2>
           </div>
 
-          {products.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-6 md:gap-8">
-              {products[0] && <ProductCard product={products[0]} className="md:col-span-7" large popular />}
-              {products[1] && <ProductCard product={products[1]} className="md:col-span-5" />}
-              {products[2] && <ProductCard product={products[2]} className="md:col-span-12" wide />}
-              {products.slice(3, 6).map(p => (
-                <ProductCard key={p.id} product={p} className="md:col-span-4" />
-              ))}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            {REVIEWS.map((r, idx) => (
+              <div 
+                key={idx} 
+                className="border rounded-2xl p-8 transition-colors duration-300"
+                style={{ background: t.bgCard, borderColor: t.border }}
+              >
+                <div className="flex gap-1 mb-5">
+                  {Array.from({ length: 5 }).map((_, j) => (
+                    <span key={j} className="text-yellow-500 text-lg">★</span>
+                  ))}
+                </div>
+                <p className="text-sm italic font-light mb-6 leading-relaxed" style={{ color: t.textSub }}>"{r.q}"</p>
+                <div className="border-t pt-4" style={{ borderColor: t.border }}>
+                  <div className="font-headline font-bold text-sm" style={{ color: t.text }}>{r.name}</div>
+                  <div className="text-xs" style={{ color: t.textMuted }}>{r.role}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── About Section ── */}
+      <section id="about" className="py-24 px-6 md:px-16 transition-colors duration-300" style={{ background: t.bgAlt }}>
+        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+          <div>
+            <span className="text-xs font-bold uppercase tracking-[0.18em] block mb-3" style={{ color: t.accent }}>קצת עלינו</span>
+            <h2 className="font-headline font-extrabold text-3xl md:text-5xl mb-6" style={{ color: t.text }}>לייזר, אהבה ותשומת לב לפרטים</h2>
+            <p className="text-base font-light mb-6 leading-relaxed" style={{ color: t.textSub }}>
+              חותם הוא סטודיו לחריטת לייזר שנולד מאהבה לאומנות ולחומרים. אנחנו מאמינים שכל פריט מחורט הוא יותר ממוצר — הוא זיכרון, מסר, חותם אישי שנשאר.
+            </p>
+            <p className="text-base font-light mb-8 leading-relaxed" style={{ color: t.textSub }}>
+              עובדים עם לקוחות פרטיים שמחפשים מתנה שתיזכר, ועם עסקים שרוצים שהמיתוג שלהם ידבר בעצמו — על כל פריט שהם שולחים.
+            </p>
+            <a 
+              href="https://wa.me/972529488077" 
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3.5 rounded-lg font-headline font-bold text-sm transition-all duration-200"
+              style={{ background: t.accent, color: t.accentText }}
+              onMouseEnter={e => e.currentTarget.style.background = t.accentHover}
+              onMouseLeave={e => e.currentTarget.style.background = t.accent}
+            >
+              שוחח איתנו עכשיו ב-WhatsApp
+            </a>
+          </div>
+          <div className="rounded-2xl overflow-hidden aspect-square lg:aspect-auto lg:h-[450px]">
+            <img 
+              src="https://images.unsplash.com/photo-1565193566173-7a0ee3dbe261?w=900&q=80&fit=crop" 
+              alt="הסטודיו שלנו" 
+              className="w-full h-full object-cover" 
+            />
+          </div>
+        </div>
+      </section>
+
+      {/* ── Order/Contact Form ── */}
+      <section id="contact" className="py-24 px-6 md:px-16 transition-colors duration-300" style={{ background: t.bg }}>
+        <div className="max-w-3xl mx-auto">
+          <div className="text-center mb-16">
+            <span className="text-xs font-bold uppercase tracking-[0.18em] block mb-3" style={{ color: t.accent }}>הזמינו עכשיו</span>
+            <h2 className="font-headline font-extrabold text-3xl md:text-5xl mb-4" style={{ color: t.text }}>בואו נדבר</h2>
+            <p className="text-base font-light" style={{ color: t.textSub }}>מלאו את הפרטים ונחזור אליכם תוך שעות ספורות בימי עסקים</p>
+          </div>
+
+          {contactSent ? (
+            <div className="text-center py-12">
+              <div className="font-headline font-bold text-4xl mb-4" style={{ color: t.accent }}>✓ קיבלנו!</div>
+              <p className="text-base font-light mb-8" style={{ color: t.textSub }}>נחזור אליכם בהקדם. ניתן גם לפנות ישירות ב-WhatsApp.</p>
+              <a 
+                href="https://wa.me/972529488077" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 px-6 py-3.5 rounded-lg font-headline font-bold text-sm text-white"
+                style={{ background: '#25D366' }}
+              >
+                פתח WhatsApp
+              </a>
             </div>
           ) : (
-            <ProductSkeleton />
+            <form onSubmit={handleContactSubmit} className="flex flex-col gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-xs font-bold mb-2 uppercase tracking-wide" style={{ color: t.textSub }}>שם מלא</label>
+                  <input 
+                    value={contactForm.name} 
+                    onChange={e => setContactForm({ ...contactForm, name: e.target.value })}
+                    onFocus={() => setFocusedField('name')} 
+                    onBlur={() => setFocusedField(null)}
+                    placeholder="ישראל ישראלי" 
+                    required 
+                    style={inputStyle('name')} 
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold mb-2 uppercase tracking-wide" style={{ color: t.textSub }}>טלפון / WhatsApp</label>
+                  <input 
+                    value={contactForm.phone} 
+                    onChange={e => setContactForm({ ...contactForm, phone: e.target.value })}
+                    onFocus={() => setFocusedField('phone')} 
+                    onBlur={() => setFocusedField(null)}
+                    placeholder="050-000-0000" 
+                    required 
+                    type="tel" 
+                    style={inputStyle('phone')} 
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-bold mb-2 uppercase tracking-wide" style={{ color: t.textSub }}>סוג הפריט לחריטה</label>
+                <select 
+                  value={contactForm.type} 
+                  onChange={e => setContactForm({ ...contactForm, type: e.target.value })}
+                  onFocus={() => setFocusedField('type')} 
+                  onBlur={() => setFocusedField(null)}
+                  required 
+                  style={{ ...inputStyle('type'), cursor: 'pointer' }}
+                >
+                  <option value="">בחרו חומר...</option>
+                  <option value="wood">חריטה על עץ</option>
+                  <option value="leather">חריטה על עור</option>
+                  <option value="metal">חריטה על מתכת</option>
+                  <option value="other">לא בטוח / אחר</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-xs font-bold mb-2 uppercase tracking-wide" style={{ color: t.textSub }}>תיאור ההזמנה</label>
+                <textarea 
+                  value={contactForm.desc} 
+                  onChange={e => setContactForm({ ...contactForm, desc: e.target.value })}
+                  onFocus={() => setFocusedField('desc')} 
+                  onBlur={() => setFocusedField(null)}
+                  placeholder="ספרו לנו מה אתם מחפשים — מתנה, שילוט, כמות, כל מה שתרצו לשתף..."
+                  rows={4} 
+                  style={{ ...inputStyle('desc'), resize: 'vertical' }} 
+                />
+              </div>
+              <div className="flex flex-col sm:flex-row gap-4 mt-2">
+                <button 
+                  type="submit"
+                  className="flex-1 py-4 rounded-lg font-headline font-bold text-base border-0 cursor-pointer transition-all duration-200"
+                  style={{ background: t.accent, color: t.accentText }}
+                  onMouseEnter={e => { e.currentTarget.style.background = t.accentHover; e.currentTarget.style.transform = 'translateY(-1px)' }}
+                  onMouseLeave={e => { e.currentTarget.style.background = t.accent; e.currentTarget.style.transform = '' }}
+                >
+                  שלחו הודעה ←
+                </button>
+                <a 
+                  href="https://wa.me/972529488077" 
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 py-4 rounded-lg font-headline font-medium text-sm text-center border transition-all duration-200 flex items-center justify-center gap-2"
+                  style={{ borderColor: t.borderStrong, color: t.text, background: t.bgCard }}
+                  onMouseEnter={e => e.currentTarget.style.borderColor = t.text}
+                  onMouseLeave={e => e.currentTarget.style.borderColor = t.borderStrong}
+                >
+                  WhatsApp
+                </a>
+              </div>
+            </form>
           )}
         </div>
       </section>
 
-      {/* ── Technology / About (dark) ── */}
-      <section id="about" className="py-24 bg-inverse-surface text-inverse-on-surface overflow-hidden relative scroll-mt-16">
-        <div className="absolute top-0 right-0 w-1/2 h-full opacity-10 pointer-events-none">
-          <div className="w-full h-full" style={{ background: 'radial-gradient(circle at center, #005e97 0%, transparent 70%)' }} />
-        </div>
-        <div className="container mx-auto px-6 md:px-8 grid md:grid-cols-2 gap-16 md:gap-20 items-center">
-          <div className="relative order-2 md:order-1">
-            <div className="aspect-square rounded-xl overflow-hidden shadow-2xl">
-              <img src={ABOUT_IMG} alt="הסטודיו שלנו" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 rounded-xl border border-primary/20" />
-            </div>
-            <div className="absolute -bottom-6 -right-6 bg-surface-container-lowest/10 backdrop-blur-md border border-white/10 rounded-xl p-5 text-white">
-              <div className="font-headline font-black text-4xl text-primary-fixed-dim">500+ <span className="text-lg">לקוחות</span></div>
-              <div className="text-xs text-white/50 mt-0.5 uppercase tracking-widest">מרוצים ברחבי הארץ</div>
-            </div>
-            <div className="absolute -top-6 -left-6 w-48 h-48 bg-secondary/20 rounded-full blur-3xl z-[-1]" />
-          </div>
-          <div className="order-1 md:order-2">
-            <p className="text-primary-fixed-dim font-label text-xs uppercase tracking-[0.25em] mb-4">אודותינו</p>
-            <h2 className="font-headline font-extrabold text-4xl md:text-5xl mb-6 leading-tight tracking-tight text-white">
-              הטכנולוגיה<br />שמאחורי הרגש.
-            </h2>
-            <p className="text-white/70 text-lg leading-relaxed mb-10 font-light">
-              חותם נוסד מתוך אמונה שטכנולוגיה וחומרים טבעיים יכולים לחיות יחד בהרמוניה מושלמת. כל פריט שאנחנו מייצרים הוא שילוב בין דיוק מיקרוסקופי לבין חמימות אורגנית.
-            </p>
-            <ul className="space-y-8">
-              {[
-                { icon: 'precision_manufacturing', title: 'דיוק מיקרוסקופי', text: 'חריטה ברמה שמאפשרת שימור של אפילו תמונות ופרטים דקים ביותר — הכל נשמר בשלמות.' },
-                { icon: 'eco', title: 'חומרים טבעיים בלבד', text: 'עץ מלא, עור אמיתי, מתכות בגימורים טבעיים — ללא ציפויים מלאכותיים.' },
-                { icon: 'workspace_premium', title: 'אחריות מלאה', text: 'כל פריט עובר בדיקת איכות לפני המשלוח — אנחנו עומדים מאחורי כל מוצר.' },
-              ].map(item => (
-                <li key={item.icon} className="flex flex-row-reverse items-start gap-5">
-                  <div className="bg-primary-container/30 p-3.5 rounded-xl text-primary-fixed border border-primary/20 shrink-0">
-                    <span className="material-symbols-outlined text-2xl">{item.icon}</span>
-                  </div>
-                  <div>
-                    <h4 className="font-headline font-bold text-xl mb-1.5 text-white">{item.title}</h4>
-                    <p className="text-white/60 leading-relaxed font-light">{item.text}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Gallery strip ── */}
-      <section className="py-20 bg-surface-container-low px-6 md:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-right mb-10">
-            <h2 className="font-headline font-extrabold text-3xl md:text-4xl text-on-surface tracking-tight">מגלריית העבודות</h2>
-            <p className="text-on-surface-variant mt-2">כמה מהפריטים שיצאו מהסטודיו שלנו</p>
-          </div>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[
-              { src: 'https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=500&q=80&fit=crop', label: 'עץ ולייזר' },
-              { src: 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=80&fit=crop', label: 'חריטה דקה' },
-              { src: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=500&q=80&fit=crop', label: 'ארנק עור' },
-              { src: 'https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=500&q=80&fit=crop', label: 'כוס תרמית' },
-            ].map((item, i) => (
-              <div key={i} className="group aspect-square rounded-xl overflow-hidden relative cursor-pointer">
-                <img src={item.src} alt={item.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-                <div className="absolute inset-0 bg-black/30 group-hover:bg-black/10 transition-colors duration-300" />
-                <div className="absolute bottom-0 right-0 left-0 p-4 bg-gradient-to-t from-black/60 to-transparent">
-                  <span className="text-white font-label text-sm font-semibold">{item.label}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── Final CTA ── */}
-      <section className="relative py-24 overflow-hidden bg-inverse-surface">
-        <div className="absolute inset-0 opacity-10" style={{ background: 'radial-gradient(ellipse at 30% 50%, #005e97 0%, transparent 70%)' }} />
-        <div className="max-w-3xl mx-auto px-8 text-center relative z-10">
-          <h2 className="font-headline font-black text-4xl md:text-5xl text-white mb-5 tracking-tight">
-            מוכנים ליצור משהו מיוחד?
-          </h2>
-          <p className="font-body text-white/70 text-xl mb-10 max-w-xl mx-auto leading-relaxed">
-            צרו איתנו קשר ונחזור אליכם תוך שעה
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              to="/products"
-              className="inline-flex items-center justify-center gap-3 px-10 py-4 text-lg btn-primary"
-            >
-              עיצוב המוצר שלי
-              <span className="material-symbols-outlined">arrow_back</span>
-            </Link>
-            <Link
-              to="/products"
-              className="inline-flex items-center justify-center gap-3 px-10 py-4 text-lg bg-white/10 border border-white/20 text-white font-headline font-bold rounded-lg hover:bg-white/15 active:scale-95 transition-all"
-            >
-              ראו את המוצרים
-              <span className="material-symbols-outlined">arrow_back</span>
-            </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ── Contact ── */}
-      <section id="contact" className="py-24 px-6 md:px-8 bg-surface-container-low scroll-mt-16">
-        <div className="max-w-7xl mx-auto grid md:grid-cols-2 gap-16 items-start">
-          <div>
-            <p className="text-primary font-label text-xs uppercase tracking-[0.25em] mb-4">צרו קשר</p>
-            <h2 className="font-headline font-extrabold text-4xl text-on-surface mb-6 tracking-tight">נשמח לשמוע מכם</h2>
-            <p className="text-on-surface-variant text-lg leading-relaxed mb-10">
-              שאלות על מוצר? רוצים הצעת מחיר לפרויקט? הצוות שלנו כאן בשבילכם — בדרך כלל מגיבים תוך שעה.
-            </p>
-            <div className="space-y-5">
-              {[
-                { icon: 'email', label: 'דוא"ל', value: 'support@hotamstudio.co.il' },
-                { icon: 'location_on', label: 'כתובת', value: 'בנימינה' },
-                { icon: 'schedule', label: 'שעות פתיחה', value: 'א׳–ה׳  09:00–18:00' },
-              ].map(item => (
-                <div key={item.icon} className="flex flex-row-reverse items-center gap-4">
-                  <div className="w-11 h-11 bg-primary/10 rounded-xl flex items-center justify-center text-primary shrink-0">
-                    <span className="material-symbols-outlined text-xl">{item.icon}</span>
-                  </div>
-                  <div>
-                    <div className="text-xs text-on-surface-variant uppercase tracking-widest font-label">{item.label}</div>
-                    <div className="font-headline font-semibold text-on-surface">{item.value}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="flex gap-3 mt-10">
-              {[
-                { icon: 'camera_alt', label: 'אינסטגרם' },
-                { icon: 'groups', label: 'פייסבוק' },
-              ].map(s => (
-                <a key={s.label} href="#" className="flex items-center gap-2 px-5 py-2.5 bg-surface-container rounded-full text-on-surface-variant hover:text-primary hover:bg-surface-container-high transition-all text-sm font-label font-semibold">
-                  <span className="material-symbols-outlined text-base">{s.icon}</span>
-                  {s.label}
-                </a>
-              ))}
-            </div>
-          </div>
-          <ContactForm />
-        </div>
-      </section>
-
-      {/* ── Sticky mobile CTA ── */}
-      <div
-        className={`fixed bottom-0 left-0 right-0 z-50 md:hidden transition-transform duration-300 ${showSticky ? 'translate-y-0' : 'translate-y-full'}`}
-        style={{ boxShadow: '0 -4px 24px rgba(0,0,0,0.15)' }}
+      {/* ── WhatsApp FAB ── */}
+      <a 
+        href="https://wa.me/972529488077" 
+        target="_blank"
+        rel="noopener noreferrer"
+        className="fixed bottom-8 right-8 z-40 w-14 h-14 rounded-full flex items-center justify-center shadow-lg transition-all duration-200"
+        style={{ background: '#25D366', color: '#fff', boxShadow: '0 4px 18px rgba(37,211,102,0.45)' }}
+        onMouseEnter={e => { e.currentTarget.style.transform = 'scale(1.1)'; e.currentTarget.style.boxShadow = '0 6px 24px rgba(37,211,102,0.6)' }}
+        onMouseLeave={e => { e.currentTarget.style.transform = ''; e.currentTarget.style.boxShadow = '0 4px 18px rgba(37,211,102,0.45)' }}
       >
-        <Link
-          to="/products"
-          className="btn-primary w-full py-4 text-lg flex items-center justify-center gap-2 rounded-none"
-        >
-          עיצוב המוצר שלי
-          <span className="material-symbols-outlined">arrow_back</span>
-        </Link>
-      </div>
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="white">
+          <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
+        </svg>
+      </a>
+
     </div>
   )
-}
-
-// ── Sub-components ──
-
-function ProductCard({ product, className = '', large, wide, popular }) {
-  const src = (product.image_url
-    ? (product.image_url.startsWith('/') ? `${STATIC_BASE}${product.image_url}` : product.image_url)
-    : PRODUCT_IMGS[product.category] || PRODUCT_IMGS.mixed)
-
-  if (wide) {
-    return (
-      <Link to={`/products/${product.id}`} className={`${className} flex flex-col md:flex-row bg-white rounded-xl overflow-hidden group border border-outline-variant/10 relative shadow-sm hover:shadow-md transition-all`}>
-        {popular && (
-          <div className="absolute top-4 right-4 z-10 bg-secondary text-on-secondary text-xs font-bold px-3 py-1 rounded-full">
-            הכי פופולרי
-          </div>
-        )}
-        <div className="md:w-1/2 relative min-h-[280px] md:min-h-[360px] overflow-hidden">
-          <img src={src} alt={product.name_he} loading="lazy" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700" />
-          <div className="absolute inset-0 bg-gradient-to-l from-black/20 to-transparent" />
-        </div>
-        <div className="md:w-1/2 p-10 md:p-14 flex flex-col justify-center">
-          <div className="mb-3 text-secondary font-bold tracking-[0.2em] text-xs uppercase">
-            {categoryLabel(product.category)}
-          </div>
-          <h3 className="font-headline font-bold text-3xl md:text-4xl mb-5 text-on-surface group-hover:text-primary transition-colors">{product.name_he}</h3>
-          <p className="text-on-surface-variant text-lg mb-8 leading-relaxed font-light">{product.description_he}</p>
-          <div className="flex items-center gap-6">
-            <span className="btn-primary px-8 py-3 text-base">בחר מוצר</span>
-            <div className="text-right">
-              <div className="text-xs text-on-surface-variant">החל מ</div>
-              <span className="text-primary font-headline font-black text-2xl flex flex-col items-end leading-none">
-                <span>₪{product.price}</span>
-                <span className="text-[10px] text-on-surface-variant font-normal mt-0.5">לפני משלוח</span>
-              </span>
-            </div>
-          </div>
-        </div>
-      </Link>
-    )
-  }
-
-  return (
-    <Link to={`/products/${product.id}`} className={`${className} bg-surface-container-low rounded-xl overflow-hidden group border border-outline-variant/10 flex flex-col hover:shadow-monolith transition-all relative`}>
-      {popular && (
-        <div className="absolute top-3 right-3 z-10 bg-secondary text-on-secondary text-xs font-bold px-3 py-1 rounded-full">
-          הכי פופולרי
-        </div>
-      )}
-      <div className={`relative overflow-hidden ${large ? 'aspect-video' : 'aspect-square'}`}>
-        <img src={src} alt={product.name_he} loading="lazy" className="w-full h-full object-contain bg-[#FAF8F5] group-hover:scale-105 transition-transform duration-700" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent" />
-      </div>
-      <div className="p-7 flex-1 flex flex-col">
-        <h3 className="font-headline font-bold text-xl md:text-2xl mb-3 text-on-surface group-hover:text-primary transition-colors">{product.name_he}</h3>
-        <p className="text-on-surface-variant mb-5 font-light text-base flex-1">{product.description_he}</p>
-        <div className="flex items-center justify-between">
-          <span className="btn-primary px-5 py-2 text-sm">בחר מוצר</span>
-          <div className="text-right">
-            <div className="text-xs text-on-surface-variant">החל מ</div>
-            <span className="text-primary font-headline font-bold text-xl flex flex-col items-end leading-none">
-              <span>₪{product.price}</span>
-              <span className="text-[9px] text-on-surface-variant font-normal mt-0.5">לפני משלוח</span>
-            </span>
-          </div>
-        </div>
-      </div>
-    </Link>
-  )
-}
-
-function ProductSkeleton() {
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-12 gap-8 animate-pulse">
-      {[7, 5, 12, 4, 4, 4].map((span, i) => (
-        <div key={i} className={`md:col-span-${span} bg-surface-container-low rounded-xl overflow-hidden`}>
-          <div className="aspect-video bg-surface-container-high" />
-          <div className="p-7 space-y-3">
-            <div className="h-5 bg-surface-container rounded w-2/3" />
-            <div className="h-4 bg-surface-container rounded w-full" />
-          </div>
-        </div>
-      ))}
-    </div>
-  )
-}
-
-function ContactForm() {
-  const [form, setForm] = useState({ name: '', email: '', message: '' })
-  const [sent, setSent] = useState(false)
-
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    setSent(true)
-    setTimeout(() => setSent(false), 4000)
-    setForm({ name: '', email: '', message: '' })
-  }
-
-  return (
-    <form onSubmit={handleSubmit} className="space-y-5 bg-surface-container-lowest rounded-xl p-8 shadow-monolith border border-outline-variant/10">
-      <div className="space-y-1.5">
-        <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">שם מלא</label>
-        <input type="text" value={form.name} onChange={e => setForm(p => ({ ...p, name: e.target.value }))} className="input-field" placeholder="ישראל ישראלי" required />
-      </div>
-      <div className="space-y-1.5">
-        <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">דוא"ל</label>
-        <input type="email" value={form.email} onChange={e => setForm(p => ({ ...p, email: e.target.value }))} className="input-field" placeholder="israel@example.com" required />
-      </div>
-      <div className="space-y-1.5">
-        <label className="text-xs font-bold text-on-surface-variant uppercase tracking-widest">הודעה</label>
-        <textarea value={form.message} onChange={e => setForm(p => ({ ...p, message: e.target.value }))} rows={4} className="input-field resize-none" placeholder="ספרו לנו על הפרויקט שלכם..." required />
-      </div>
-      <button type="submit" className="btn-primary w-full py-4 text-base">
-        {sent ? '✓ ההודעה נשלחה!' : 'שליחה'}
-      </button>
-    </form>
-  )
-}
-
-function categoryLabel(cat) {
-  return { drinkware: 'כלי שתייה', accessories: 'אביזרים', signage: 'שילוט', home_decor: 'עיצוב הבית', gifts: 'מתנות', mixed: 'מגוון' }[cat] || cat
 }
