@@ -140,7 +140,7 @@ export default function ProductDetail() {
           <h2 className="font-headline font-bold text-2xl mb-4">המוצר לא נמצא</h2>
           <Link 
             to="/products" 
-            className="px-8 py-3 rounded-lg font-bold text-base inline-block"
+            className="px-8 py-3 rounded-xl font-bold text-base inline-block"
             style={{ background: t.accent, color: t.accentText }}
           >
             חזרה למוצרים
@@ -215,7 +215,7 @@ export default function ProductDetail() {
               {features.map((f, i) => (
                 <div 
                   key={i} 
-                  className="flex items-center gap-2.5 rounded-lg px-3 py-2.5 border"
+                  className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 border"
                   style={{ background: t.bgCard, borderColor: t.border }}
                 >
                   <span className="material-symbols-outlined text-base" style={{ color: t.accent, fontVariationSettings: "'FILL' 1" }}>check_circle</span>
@@ -233,7 +233,7 @@ export default function ProductDetail() {
             )}
 
             {/* Price + CTA */}
-            <div className="rounded-xl p-6 border" style={{ background: t.bgCard, borderColor: t.border, boxShadow: t.shadow }}>
+            <div className="rounded-2xl p-6 border" style={{ background: t.bgCard, borderColor: t.border, boxShadow: t.shadow }}>
               <div className="flex items-baseline justify-between mb-5">
                 <div>
                   <div className="text-xs mb-0.5" style={{ color: t.textMuted }}>מחיר מתחיל מ</div>
@@ -247,7 +247,7 @@ export default function ProductDetail() {
               </div>
               <button
                 onClick={() => navigate(`/customizer/${product.id}`)}
-                className="w-full py-4 text-xl flex items-center justify-center gap-3 rounded-lg border-0 font-bold transition-all duration-200"
+                className="w-full py-4 text-xl flex items-center justify-center gap-3 rounded-xl border-0 font-bold transition-all duration-200"
                 style={{ background: t.accent, color: t.accentText }}
                 onMouseEnter={e => { e.currentTarget.style.background = t.accentHover; e.currentTarget.style.transform = 'translateY(-1px)' }}
                 onMouseLeave={e => { e.currentTarget.style.background = t.accent; e.currentTarget.style.transform = '' }}
@@ -284,21 +284,21 @@ export default function ProductDetail() {
                 <Link
                   key={p.id}
                   to={`/products/${p.id}`}
-                  className="group rounded-xl overflow-hidden border transition-all"
+                  className="group rounded-2xl overflow-hidden transition-all shadow-sm"
                   style={{
                     background: t.bgCard,
-                    borderColor: t.border,
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)',
                   }}
                   onMouseEnter={e => {
-                    e.currentTarget.style.borderColor = t.borderStrong;
                     e.currentTarget.style.boxShadow = t.shadow;
+                    e.currentTarget.style.transform = 'translateY(-4px)';
                   }}
                   onMouseLeave={e => {
-                    e.currentTarget.style.borderColor = t.border;
-                    e.currentTarget.style.boxShadow = 'none';
+                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.02)';
+                    e.currentTarget.style.transform = '';
                   }}
                 >
-                  <div className="aspect-video overflow-hidden bg-white/50">
+                  <div className="aspect-video overflow-hidden" style={{ background: t.bgAlt }}>
                     <img
                       src={imgSrc(p)}
                       alt={p.name_he}

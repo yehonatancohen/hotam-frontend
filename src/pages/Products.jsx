@@ -99,19 +99,19 @@ export default function Products() {
         className="sticky top-[52px] z-40 px-6 md:px-8 py-3 border-b backdrop-blur-sm transition-colors duration-300" 
         style={{ background: t.navBg, borderColor: t.border }}
       >
-        <div className="max-w-7xl mx-auto flex gap-2 overflow-x-auto scrollbar-thin pb-0.5">
+        <div className="max-w-7xl mx-auto flex gap-2 overflow-x-auto scrollbar-none pb-0.5">
           {categories.map(cat => {
             const active = activeCategory === cat;
             return (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className="px-4 py-2 rounded-none text-sm font-label font-semibold whitespace-nowrap transition-all"
+                className="px-5 py-2 rounded-full text-sm font-label font-semibold whitespace-nowrap transition-all duration-300"
                 style={{
                   background: active ? t.accent : t.bgCard,
                   color: active ? t.accentText : t.textSub,
                   border: `1.5px solid ${active ? t.accent : t.border}`,
-                  boxShadow: active ? `0 2px 8px ${t.accent}15` : 'none',
+                  boxShadow: active ? `0 4px 12px ${t.accent}25` : 'none',
                 }}
               >
                 {cat === 'all' ? 'הכל' : CATEGORY_LABELS[cat] || cat}
@@ -132,7 +132,7 @@ export default function Products() {
               <p className="text-center text-sm mb-8 animate-pulse" style={{ color: t.textMuted }}>טוען מוצרים...</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-pulse">
                 {[...Array(8)].map((_, i) => (
-                  <div key={i} className="rounded-none overflow-hidden border" style={{ background: t.bgCard, borderColor: t.border }}>
+                  <div key={i} className="rounded-xl overflow-hidden border" style={{ background: t.bgCard, borderColor: t.border }}>
                     <div className="aspect-[4/3]" style={{ background: t.bgAlt }} />
                     <div className="p-5 space-y-2">
                       <div className="h-4 w-3/4" style={{ background: t.bgAlt }} />
@@ -143,20 +143,20 @@ export default function Products() {
               </div>
             </div>
           ) : error ? (
-            <div className="text-center py-20 border" style={{ borderColor: t.border }}>
+            <div className="text-center py-20 border rounded-xl" style={{ borderColor: t.border }}>
               <span className="material-symbols-outlined text-5xl block mb-4" style={{ color: t.textMuted }}>wifi_off</span>
               <p className="font-headline font-bold text-xl mb-2" style={{ color: t.text }}>לא הצלחנו לטעון את המוצרים</p>
               <p className="text-sm mb-6" style={{ color: t.textMuted }}>נסו שוב בעוד רגע</p>
               <button 
                 onClick={load} 
-                className="px-6 py-2.5 rounded-none text-sm font-bold transition-all duration-200"
+                className="px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-200"
                 style={{ background: t.accent, color: t.accentText }}
               >
                 נסה שוב
               </button>
             </div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-20 border" style={{ color: t.textMuted, borderColor: t.border }}>
+            <div className="text-center py-20 border rounded-xl" style={{ color: t.textMuted, borderColor: t.border }}>
               <span className="material-symbols-outlined text-5xl block mb-3">inbox</span>
               לא נמצאו מוצרים בקטגוריה זו
             </div>
@@ -180,19 +180,17 @@ function ProductCard({ product }) {
   return (
     <Link
       to={`/products/${product.id}`}
-      className="group rounded-none overflow-hidden border transition-all duration-300 flex flex-col"
+      className="group rounded-2xl overflow-hidden transition-all duration-300 flex flex-col shadow-sm"
       style={{
         background: t.bgCard,
-        borderColor: t.border,
+        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)',
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.borderColor = t.borderStrong;
         e.currentTarget.style.boxShadow = t.shadow;
-        e.currentTarget.style.transform = 'translateY(-3px)';
+        e.currentTarget.style.transform = 'translateY(-4px)';
       }}
       onMouseLeave={e => {
-        e.currentTarget.style.borderColor = t.border;
-        e.currentTarget.style.boxShadow = 'none';
+        e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.02)';
         e.currentTarget.style.transform = '';
       }}
     >
@@ -201,12 +199,12 @@ function ProductCard({ product }) {
         <img
           src={src}
           alt={product.name_he}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-750 ease-out"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/10 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
-        <div className="absolute bottom-3 right-3 left-3 flex justify-end opacity-0 group-hover:opacity-100 transition-all translate-y-2 group-hover:translate-y-0">
+        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-350" />
+        <div className="absolute bottom-3 right-3 left-3 flex justify-end opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
           <span 
-            className="text-xs font-bold px-3 py-1.5 rounded-none shadow"
+            className="text-xs font-bold px-4 py-2 rounded-lg shadow-md transition-transform active:scale-95"
             style={{ background: t.accent, color: t.accentText }}
           >
             התחל לעצב ←
@@ -227,7 +225,7 @@ function ProductCard({ product }) {
         >
           {product.name_he}
         </h3>
-        <p className="text-sm leading-relaxed flex-1 line-clamp-2" style={{ color: t.textSub }}>
+        <p className="text-sm leading-relaxed flex-1 line-clamp-2 font-light" style={{ color: t.textSub }}>
           {product.description_he}
         </p>
         <div className="mt-4 flex items-center justify-between border-t pt-4" style={{ borderColor: t.border }}>
@@ -235,7 +233,7 @@ function ProductCard({ product }) {
             <span>₪{product.price}</span>
             <span className="text-[10px] font-normal mt-0.5" style={{ color: t.textMuted }}>לפני משלוח</span>
           </span>
-          <span className="material-symbols-outlined transition-colors" style={{ color: t.textMuted }}>arrow_back</span>
+          <span className="material-symbols-outlined transition-colors group-hover:translate-x-[-4px]" style={{ color: t.textMuted }}>arrow_back</span>
         </div>
       </div>
     </Link>
