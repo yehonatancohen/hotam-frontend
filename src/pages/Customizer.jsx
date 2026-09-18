@@ -3,6 +3,7 @@ import { useNavigate, useParams, Link } from 'react-router-dom'
 import axios from 'axios'
 import { useCart } from '../context/CartContext'
 import { useTheme } from '../context/ThemeContext'
+import Icon from '../components/Icon'
 
 const API = import.meta.env.VITE_API_URL
 const STATIC_BASE = import.meta.env.VITE_STATIC_BASE
@@ -93,11 +94,11 @@ export const CATEGORY_CONFIG = {
 }
 
 export const FONT_DEFS = {
-  modern:      { label: 'מודרני',  style: { fontFamily: 'Heebo, sans-serif',     fontWeight: 900 } },
-  classic:     { label: 'קלאסי',   style: { fontFamily: 'Assistant, sans-serif', fontWeight: 300, letterSpacing: '0.15em' } },
+  modern:      { label: 'מודרני',  style: { fontFamily: 'Rubik, sans-serif',     fontWeight: 700 } },
+  classic:     { label: 'קלאסי',   style: { fontFamily: '"Miriam Libre", serif', fontWeight: 400, letterSpacing: '0.08em' } },
   handwriting: { label: 'כתב יד',  style: { fontFamily: 'cursive',               fontStyle: 'italic', fontWeight: 700 } },
   typewriter:  { label: 'מכונת כתיבה', style: { fontFamily: 'monospace', fontWeight: 600 } },
-  bold:        { label: 'בולט',    style: { fontFamily: 'Impact, sans-serif', fontWeight: 900, letterSpacing: '0.05em' } },
+  bold:        { label: 'בולט',    style: { fontFamily: 'Rubik, sans-serif', fontWeight: 800, letterSpacing: '0.02em' } },
 }
 
 export const ZONES = [
@@ -145,30 +146,33 @@ const fmtBytes = b => b < 1048576 ? `${(b / 1024).toFixed(1)} KB` : `${(b / 1048
 
 // ── Shared sub-components ─────────────────────────────────────────────────────
 
+// One step of the form: a two-ink step numeral, a title, and the controls. No card shell.
 function SectionCard({ num, title, desc, children }) {
-  const { theme: t } = useTheme()
+  const numbered = num && num !== '—'
   return (
-    <div className="rounded-2xl p-6 shadow-sm transition-shadow focus-within:shadow-md border" style={{ background: t.bgCard, borderColor: t.border, color: t.text }}>
-      <div className="flex items-center gap-3 mb-5">
-        <div
-          className="w-7 h-7 rounded-full flex items-center justify-center text-[11px] font-bold text-white flex-shrink-0"
-          style={{ background: num === '—' ? '#9CA3AF' : t.accent }}
-        >
-          {num}
-        </div>
-        <div>
-          <div className="text-[15px] font-semibold" style={{ color: t.text }}>{title}</div>
-          {desc && <div className="text-xs mt-0.5" style={{ color: t.textMuted }}>{desc}</div>}
+    <section className="py-8 border-t border-[var(--rule-strong)] first:border-t-0 first:pt-0">
+      <div className="flex items-start gap-4 mb-5">
+        {numbered && (
+          <span
+            className="font-display misprint shrink-0 text-[60px] leading-[0.75] w-9 text-center tabular"
+            data-text={Number(num)}
+            aria-hidden="true"
+          >
+            {Number(num)}
+          </span>
+        )}
+        <div className="pt-0.5">
+          <h2 className="m-0 font-display text-[33px] leading-tight">{title}</h2>
+          {desc && <p className="m-0 mt-1 text-[15px] text-ink-3">{desc}</p>}
         </div>
       </div>
       {children}
-    </div>
+    </section>
   )
 }
 
 function Divider() {
-  const { theme: t } = useTheme()
-  return <div className="border-t my-5" style={{ borderColor: t.border }} />
+  return <div className="border-t border-[var(--rule)] my-6" />
 }
 
 // ── Live Preview ──────────────────────────────────────────────────────────────
@@ -221,7 +225,7 @@ export function LivePreview({
     transform: `translate(-50%, -50%) rotate(${rotationText}deg)`,
     direction: 'ltr',
     border: compact || !interactive || previewApproved ? 'none' : '1.5px dashed ' + t.accent,
-    background: compact || !interactive || previewApproved ? 'transparent' : 'rgba(45,106,79,0.06)',
+    background: compact || !interactive || previewApproved ? 'transparent' : 'rgba(0,120,191,0.07)',
     cursor: compact || !interactive || previewApproved ? 'default' : 'move',
     touchAction: 'none',
   }
@@ -234,7 +238,7 @@ export function LivePreview({
     transform: `translate(-50%, -50%) rotate(${rotationLogo}deg) scale(${sizeScaleLogo})`,
     direction: 'ltr',
     border: compact || !interactive || previewApproved ? 'none' : '1.5px dashed ' + t.accent,
-    background: compact || !interactive || previewApproved ? 'transparent' : 'rgba(45,106,79,0.06)',
+    background: compact || !interactive || previewApproved ? 'transparent' : 'rgba(0,120,191,0.07)',
     cursor: compact || !interactive || previewApproved ? 'default' : 'move',
     touchAction: 'none',
   }
@@ -349,7 +353,7 @@ export function LivePreview({
   return (
     <div>
       <div
-        className="relative rounded-xl overflow-hidden border border"
+        className="relative rounded-[10px] overflow-hidden bg-paper-2"
         style={{ aspectRatio: '4/3', containerType: 'inline-size' }}
       >
         <div ref={containerRef} className="absolute inset-0 w-full h-full" style={zoomStyle}>
@@ -404,7 +408,7 @@ export function LivePreview({
                     onMouseDown={e => handleStartDrag('text', 'rotate', e)}
                     onTouchStart={e => handleStartDrag('text', 'rotate', e)}
                   >
-                    <span className="material-symbols-outlined text-[10px] font-bold select-none pointer-events-none" style={{ color: t.accent }}>rotate_right</span>
+                    <Icon name="rotate" size={12} strokeWidth={2.4} style={{ color: t.accent }} />
                   </div>
                 </>
               )}
@@ -443,7 +447,7 @@ export function LivePreview({
                     onMouseDown={e => handleStartDrag('logo', 'rotate', e)}
                     onTouchStart={e => handleStartDrag('logo', 'rotate', e)}
                   >
-                    <span className="material-symbols-outlined text-[10px] font-bold select-none pointer-events-none" style={{ color: t.accent }}>rotate_right</span>
+                    <Icon name="rotate" size={12} strokeWidth={2.4} style={{ color: t.accent }} />
                   </div>
                 </>
               )}
@@ -452,53 +456,31 @@ export function LivePreview({
         </div>
 
         {/* Live indicator */}
-        <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-black/30 backdrop-blur-sm px-2.5 py-1 rounded-full border border-white/20">
-          <span className="relative flex h-1.5 w-1.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#52B788] opacity-75" />
-            <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-[#52B788]" />
-          </span>
-          <span className="text-[9px] font-bold tracking-widest text-white uppercase">
-            {compact ? 'תצוגה חיה' : 'LIVE PREVIEW'}
-          </span>
+        <div className="absolute top-3 right-3 flex items-center gap-2 bg-[rgba(18,19,23,.55)] backdrop-blur-sm px-2.5 py-1 rounded-full">
+          <span className="live-dot" style={{ width: 7, height: 7 }} aria-hidden="true" />
+          <span className="text-[11px] font-medium text-white">תצוגה חיה</span>
         </div>
       </div>
 
       {!compact && interactive && (
         <>
-          <p className="text-[11px] text-[#6B6560] text-center mt-2 italic">
-            התצוגה משוערת. החריטה הסופית עשויה להשתנות מעט בהתאם לגרגר החומר.
+          <p className="text-[13px] text-ink-3 text-center mt-3 mb-0">
+            תצוגה משוערת. גרגר החומר משנה קצת את התוצאה, ולכן תקבלו שרטוט מדויק לאישור.
           </p>
           <div className="flex gap-2 mt-3">
             {previewApproved ? (
-              <div className="flex-1 flex gap-2">
-                <div className="flex-1 py-2.5 text-center text-xs font-semibold rounded-xl select-none flex items-center justify-center border" style={{ color: t.accent, background: t.accentSubtle, borderColor: t.accent }}>
-                  ✓ התצוגה אושרה — מוכן להוספה לסל
+              <>
+                <div className="flex-1 min-h-[46px] flex items-center justify-center gap-2 rounded-[10px] text-[14.5px] font-medium text-blue" style={{ boxShadow: 'inset 0 0 0 1.5px var(--blue)', background: 'rgba(0,120,191,.06)' }}>
+                  <Icon name="check" size={17} /> המיקום נשמר
                 </div>
-                <button
-                  onClick={onAdjust}
-                  type="button"
-                  className="px-4 py-2.5 text-xs font-semibold bg-white border-2 rounded-xl transition-all shrink-0" style={{ color: t.accent, borderColor: t.accent }} onMouseEnter={e => e.currentTarget.style.background = t.accentSubtle} onMouseLeave={e => e.currentTarget.style.background = 'transparent'}
-                >
-                  ערוך
-                </button>
-              </div>
+                <button onClick={onAdjust} type="button" className="btn btn-line btn-sm">לערוך</button>
+              </>
             ) : (
               <>
-                <button
-                  onClick={onApprove}
-                  className="flex-1 py-2.5 text-sm font-semibold text-white rounded-xl transition-colors"
-                  style={{ background: t.accent }}
-                  onMouseEnter={e => e.currentTarget.style.background = t.accentHover}
-                  onMouseLeave={e => e.currentTarget.style.background = t.accent}
-                >
-                  נראה טוב ✓
+                <button type="button" onClick={onApprove} className="btn btn-pink btn-sm flex-1">
+                  <Icon name="check" size={17} /> נראה טוב
                 </button>
-                <button
-                  onClick={onAdjust}
-                  className="flex-1 py-2.5 text-sm font-medium text-[#6B6560] bg-white border border rounded-xl hover:border-[#6B6560] transition-colors"
-                >
-                  שנה הגדרות
-                </button>
+                <button type="button" onClick={onAdjust} className="btn btn-line btn-sm flex-1">לשנות הגדרות</button>
               </>
             )}
           </div>
@@ -511,7 +493,7 @@ export function LivePreview({
 // ── Main Component ────────────────────────────────────────────────────────────
 
 export default function Customizer() {
-  const { theme: t } = useTheme()
+  const { theme: t, visitorName } = useTheme()
   const { productId } = useParams()
   const navigate = useNavigate()
   const { addToCart } = useCart()
@@ -584,6 +566,7 @@ export default function Customizer() {
         }
 
         // Check localStorage for saved draft first
+        let hadDraftText = false
         try {
           const draft = JSON.parse(localStorage.getItem(`am_draft_${productId}`))
           if (draft) {
@@ -595,11 +578,14 @@ export default function Customizer() {
             if (draft.rotationLogo) setRotationLogo(draft.rotationLogo)
             if (draft.textAlignment) setTextAlignment(draft.textAlignment)
             if (draft.engravingType) setEngravingType(draft.engravingType)
-            if (draft.engravingText) setEngravingText(draft.engravingText)
+            if (draft.engravingText) { setEngravingText(draft.engravingText); hadDraftText = true }
             if (draft.selectedFont) setSelectedFont(draft.selectedFont)
             showToast('הטיוטה שלך שוחזרה')
           }
         } catch (_) {}
+
+        // The name typed on the home page door sign carries over.
+        if (!hadDraftText && visitorName) setEngravingText(visitorName)
 
         setPlacement(defaultPlacement)
         setPlacementLogo(defaultPlacementLogo)
@@ -730,16 +716,16 @@ export default function Customizer() {
 
   // ── Guards ────────────────────────────────────────────────────────────────
   if (loading) return (
-    <div className="min-h-[60vh] flex items-center justify-center">
-      <span className="animate-spin material-symbols-outlined text-4xl text-primary">autorenew</span>
+    <div className="min-h-[60vh] grid place-items-center text-ink-3" role="status">
+      <span className="flex items-center gap-3"><Icon name="spinner" size={22} /> טוענים את המוצר…</span>
     </div>
   )
 
   if (notFound || !product) return (
-    <div className="min-h-[60vh] flex items-center justify-center text-center px-4">
-      <div>
-        <h2 className="font-headline font-bold text-2xl mb-4">המוצר לא נמצא</h2>
-        <Link to="/products" className="btn-primary px-8 py-3 inline-block">חזרה למוצרים</Link>
+    <div className="wrap py-24">
+      <div className="sheet text-center px-6 py-16 max-w-xl mx-auto">
+        <h1 className="font-display text-[44px] m-0">המוצר הזה לא נמצא</h1>
+        <Link to="/products" className="btn btn-pink mt-6">לכל המוצרים</Link>
       </div>
     </div>
   )
@@ -776,7 +762,7 @@ export default function Customizer() {
     }
   })()
 
-  const typeLabels = { text: 'טקסט בלבד', logo: 'תמונה בלבד', both: 'טקסט + תמונה' }
+  const typeLabels = { text: 'טקסט', logo: 'תמונה או לוגו', both: 'טקסט ותמונה' }
 
   const getProductImg = () => {
     // Dynamic image swap if custom option specifies an image
@@ -833,62 +819,71 @@ export default function Customizer() {
   }
 
   // ── Render ────────────────────────────────────────────────────────────────
+  const summaryRows = [
+    ['מוצר', product.name_he],
+    ['חריטה', typeLabels[engravingType]],
+    showTextSection && engravingText && ['טקסט', engravingText],
+    showTextSection && ['גופן', FONT_DEFS[selectedFont]?.label],
+    (materials.length > 0 && customOptions.length === 0) && ['חומר', material?.label],
+    sizes.length > 1 && ['גודל', size?.label],
+    colors.length > 0 && ['צבע', selectedColor],
+    ...Object.entries(selectedOptions).map(([k, v]) => [k, v?.label || v]),
+    ['שרטוט לאישור', wantsProof ? 'כן, לפני חריטה' : 'לא'],
+    ['זמן הכנה', product.production_time || '5–7 ימי עסקים'],
+  ].filter(Boolean)
+
   return (
-    <div dir="rtl">
-      {/* Breadcrumb */}
-      <div className="px-4 sm:px-6 lg:px-8 pt-8 max-w-7xl mx-auto">
-        <nav className="flex items-center gap-2 text-sm text-on-surface-variant mb-5">
-          <Link to="/products" className="hover:text-primary transition-colors">מוצרים</Link>
-          <span className="material-symbols-outlined text-sm" style={{ direction: 'ltr' }}>chevron_left</span>
-          <Link to={`/products/${product.id}`} className="hover:text-primary transition-colors">{product.name_he}</Link>
-          <span className="material-symbols-outlined text-sm" style={{ direction: 'ltr' }}>chevron_left</span>
-          <span className="text-on-surface">התאמה אישית</span>
+    <div>
+      <div className="wrap pt-6">
+        <nav className="text-[14.5px] text-ink-3" aria-label="פירורי לחם">
+          <ol className="list-none m-0 p-0 flex flex-wrap items-center gap-1.5">
+            <li><Link to="/products" className="link-u">מוצרים</Link></li>
+            <li aria-hidden="true"><Icon name="chevron" size={14} /></li>
+            <li><Link to={`/products/${product.id}`} className="link-u">{product.name_he}</Link></li>
+            <li aria-hidden="true"><Icon name="chevron" size={14} /></li>
+            <li className="text-ink" aria-current="page">עיצוב החריטה</li>
+          </ol>
         </nav>
-        <h1 className="font-headline font-extrabold text-3xl sm:text-4xl text-on-surface mb-1">
-          עצב את החריטה שלך.
+        <h1 className="font-display m-0 mt-5" style={{ fontSize: 'clamp(51px, 6.6vw, 84px)', lineHeight: 0.9 }}>
+          מה נחרוט על {product.name_he}?
         </h1>
-        <p className="text-on-surface-variant text-sm mb-8">
-          {product.name_he} — חריטת לייזר אישית, מיוצרת לפי הזמנה.
+        <p className="m-0 mt-3 mb-10 text-[17px] text-ink-2 max-w-[60ch]">
+          כותבים, מזיזים ורואים על המוצר. לפני החריטה נשלח לכם שרטוט מדויק לאישור.
         </p>
       </div>
 
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-32 lg:pb-20">
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_400px] gap-8 items-start">
+      <div className="wrap pb-32 lg:pb-24">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_420px] gap-10 lg:gap-14 items-start">
 
           {/* ══════════ FORM COLUMN ══════════ */}
-          <div className="space-y-4">
+          <div className="sheet" style={{ padding: 'clamp(22px, 3.5vw, 40px)' }}>
 
-            {/* Engraving type */}
-            <SectionCard num="—" title="מה תרצה לחרוט?" desc="בחר את סוג התוכן לחריטה">
-              <div className="flex bg-[#F7F5F2] border border rounded-xl p-1 gap-1">
+            <SectionCard num="—" title="מה חורטים?">
+              <div className="seg" role="group" aria-label="סוג חריטה">
                 {[
-                  { id: 'text', label: 'טקסט בלבד' },
-                  { id: 'logo', label: 'תמונה / לוגו' },
-                  { id: 'both', label: 'טקסט + תמונה' },
-                ].map(t => (
+                  { id: 'text', label: 'טקסט' },
+                  { id: 'logo', label: 'תמונה או לוגו' },
+                  { id: 'both', label: 'שניהם' },
+                ].map(opt => (
                   <button
-                    key={t.id}
-                    onClick={() => { setEngravingType(t.id); setPreviewApproved(false) }}
-                    className="flex-1 py-2.5 px-2 text-sm font-medium rounded-lg transition-all"
-                    style={engravingType === t.id
-                      ? { background: '#fff', color: t.accent, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }
-                      : { color: '#6B6560' }}
+                    key={opt.id}
+                    type="button"
+                    aria-pressed={engravingType === opt.id}
+                    onClick={() => { setEngravingType(opt.id); setPreviewApproved(false) }}
                   >
-                    {t.label}
+                    {opt.label}
                   </button>
                 ))}
               </div>
             </SectionCard>
 
-            {/* §01 Text input */}
             {showTextSection && (
-              <SectionCard num={nums.text} title="מה יהיה כתוב?" desc="המילים שלך, חרוטות לנצח.">
-                {/* Text field */}
-                <div className="mb-4">
-                  <div className="flex justify-between items-baseline mb-1.5">
-                    <label className="text-sm font-medium text-[#1C1917]" htmlFor="et-input">טקסט לחריטה</label>
-                    <span className={`text-xs ${engravingText.length > cfg.maxChars * 0.85 ? 'text-[#DC2626] font-semibold' : 'text-[#6B6560]'}`}>
-                      {engravingText.length} / {cfg.maxChars}
+              <SectionCard num={nums.text} title="מה יהיה כתוב?" desc="טקסט קצר נחרט חד ויפה יותר.">
+                <div>
+                  <div className="flex justify-between items-baseline">
+                    <label className="field-label" htmlFor="et-input">טקסט לחריטה</label>
+                    <span className={`text-[13px] tabular ${engravingText.length > cfg.maxChars * 0.85 ? 'text-danger font-semibold' : 'text-ink-3'}`}>
+                      {engravingText.length}/{cfg.maxChars}
                     </span>
                   </div>
                   <input
@@ -901,21 +896,17 @@ export default function Customizer() {
                       validateText(v)
                       setPreviewApproved(false)
                     }}
-                    className="w-full border-[1.5px] border rounded-xl px-4 py-3 text-base text-[#1C1917] bg-white outline-none transition-colors focus:ring-2 focus:ring-offset-2"
-                    style={{ '--tw-ring-color': t.accent }}
+                    className="field text-[18px]"
+                    aria-invalid={textError ? 'true' : undefined}
+                    aria-describedby={textError ? 'et-error' : undefined}
                     placeholder={cfg.hint}
                   />
                   {textError && (
-                    <p className="text-xs text-[#DC2626] mt-1.5 flex items-start gap-1">
-                      <span className="material-symbols-outlined text-xs mt-0.5">warning</span>
-                      {textError}
-                    </p>
+                    <p id="et-error" className="field-error m-0"><Icon name="alert" size={15} /> {textError}</p>
                   )}
-                  <p className="text-xs text-[#6B6560] mt-1.5">טקסט קצר יותר נחרט בצורה ברורה ויפה יותר.</p>
                 </div>
 
-                {/* Multiline toggle */}
-                <label className="flex items-center gap-2.5 cursor-pointer mb-3 w-fit">
+                <label className="flex items-center gap-2.5 cursor-pointer mt-4 w-fit text-[15px] text-ink-2">
                   <input
                     type="checkbox"
                     checked={isMultiline}
@@ -923,82 +914,73 @@ export default function Customizer() {
                       setIsMultiline(e.target.checked)
                       if (!e.target.checked) setEngravingText2('')
                     }}
-                    className="w-4 h-4 cursor-pointer rounded"
-                    style={{ accentColor: t.accent }}
+                    className="w-[18px] h-[18px] cursor-pointer"
+                    style={{ accentColor: 'var(--blue)' }}
                   />
-                  <span className="text-sm font-medium text-[#1C1917]">הוסף שורה שנייה</span>
+                  להוסיף שורה שנייה
                 </label>
 
                 {isMultiline && (
-                  <div className="bg-[#F7F5F2] rounded-xl p-4 mb-4 space-y-3">
-                    <div>
-                      <div className="flex justify-between mb-1.5">
-                        <label className="text-sm font-medium text-[#1C1917]">שורה שנייה</label>
-                        <span className="text-xs text-[#6B6560]">{engravingText2.length} / {cfg.maxChars}</span>
-                      </div>
-                      <input
-                        type="text"
-                        value={engravingText2}
-                        onChange={e => setEngravingText2(e.target.value.slice(0, cfg.maxChars))}
-                        className="w-full border-[1.5px] border rounded-xl px-4 py-3 text-base text-[#1C1917] bg-white outline-none transition-colors focus:ring-2 focus:ring-offset-2"
-                        placeholder="שורה שנייה (אופציונלי)"
-                      />
+                  <div className="mt-4">
+                    <div className="flex justify-between items-baseline">
+                      <label className="field-label" htmlFor="et-input-2">שורה שנייה</label>
+                      <span className="text-[13px] text-ink-3 tabular">{engravingText2.length}/{cfg.maxChars}</span>
                     </div>
+                    <input
+                      id="et-input-2"
+                      type="text"
+                      value={engravingText2}
+                      onChange={e => setEngravingText2(e.target.value.slice(0, cfg.maxChars))}
+                      className="field"
+                      placeholder="למשל תאריך"
+                    />
                   </div>
                 )}
 
                 <Divider />
 
-                {/* Font selector */}
-                <div>
-                  <p className="text-sm font-medium text-[#1C1917] mb-1">בחר גופן</p>
-                  <p className="text-xs text-[#6B6560] mb-3">כל הגופנים מותאמים לחריטת לייזר</p>
-                  <div className="grid grid-cols-3 gap-2">
-                    {cfg.fonts.map(fid => (
-                      <button
-                        key={fid}
-                        onClick={() => { setSelectedFont(fid); setPreviewApproved(false) }}
-                        className="relative border-2 rounded-xl py-4 px-2 text-center transition-all"
-                        style={selectedFont === fid
-                          ? { borderColor: t.accent, background: t.accentSubtle }
-                          : { borderColor: t.border, background: '#fff' }}
-                      >
-                        {selectedFont === fid && (
-                          <span className="absolute top-1.5 left-2 text-[10px] font-bold" style={{ color: t.accent }}>✓</span>
-                        )}
-                        <span
-                          className="block text-lg text-[#1C1917] mb-1"
-                          style={FONT_DEFS[fid].style}
-                        >
-                          {FONT_DEFS[fid].label}
-                        </span>
-                        <span className="block text-[10px] text-[#6B6560] uppercase tracking-wider">
-                          {FONT_DEFS[fid].label}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
+                <p className="field-label m-0">גופן</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 mt-2" role="group" aria-label="בחירת גופן">
+                  {cfg.fonts.map(fid => (
+                    <button
+                      key={fid}
+                      type="button"
+                      aria-pressed={selectedFont === fid}
+                      onClick={() => { setSelectedFont(fid); setPreviewApproved(false) }}
+                      className="choice flex-col justify-center !items-center py-4"
+                    >
+                      {selectedFont === fid && <span className="tick"><Icon name="check" size={13} strokeWidth={2.6} /></span>}
+                      <span className="block text-[22px] leading-tight text-ink truncate max-w-full" style={FONT_DEFS[fid].style}>
+                        {(engravingText || 'חותם').slice(0, 10)}
+                      </span>
+                      <span className="block text-[12.5px] text-ink-3">{FONT_DEFS[fid].label}</span>
+                    </button>
+                  ))}
                 </div>
               </SectionCard>
             )}
 
-            {/* §02 Logo upload */}
             {showLogoSection && (
-              <SectionCard num={nums.logo} title="העלה תמונה או לוגו" desc="קבצי SVG נותנים את התוצאה החדה ביותר.">
+              <SectionCard num={nums.logo} title="תמונה או לוגו" desc="SVG או PNG עם רקע שקוף נותנים את התוצאה הכי חדה.">
                 <div
                   id="drop-zone"
-                  className="border-2 border-dashed rounded-xl p-10 text-center cursor-pointer transition-all"
-                  style={isDragOver
-                    ? { borderColor: t.accent, background: t.accentSubtle }
-                    : { borderColor: t.border, background: '#F7F5F2' }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label="העלאת קובץ: גוררים לכאן או לוחצים לבחירה"
+                  className="rounded-[12px] p-8 md:p-10 text-center cursor-pointer transition-colors"
+                  style={{
+                    border: `2px dashed ${isDragOver ? 'var(--blue)' : 'var(--rule-strong)'}`,
+                    background: isDragOver ? 'rgba(0,120,191,.06)' : 'var(--paper)',
+                  }}
                   onDragOver={e => { e.preventDefault(); setIsDragOver(true) }}
                   onDragLeave={() => setIsDragOver(false)}
                   onDrop={e => { e.preventDefault(); setIsDragOver(false); if (e.dataTransfer.files[0]) processFile(e.dataTransfer.files[0]) }}
                   onClick={() => fileInputRef.current?.click()}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInputRef.current?.click() } }}
                 >
-                  <span className="material-symbols-outlined text-4xl text-[#6B6560] block mb-3">cloud_upload</span>
-                  <p className="text-sm font-medium text-[#1C1917] mb-1">שחרר כאן, או לחץ לבחירה</p>
-                  <p className="text-xs text-[#6B6560]">SVG · PNG עם שקיפות · JPG — עד 5 MB</p>
+                  <Icon name="upload" size={30} className="mx-auto text-ink-3" />
+                  <p className="m-0 mt-3 font-medium">גוררים לכאן, או לוחצים לבחירה</p>
+                  <p className="m-0 mt-1 text-[13.5px] text-ink-3">SVG · PNG · JPG, עד 5MB</p>
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -1009,80 +991,52 @@ export default function Customizer() {
                 </div>
 
                 {uploadedFile && (
-                  <div className="flex items-center gap-3 p-3.5 bg-[#F7F5F2] rounded-xl border border mt-3">
-                    <img
-                      src={uploadedImgSrc}
-                      alt="תצוגה מקדימה"
-                      className="w-14 h-14 object-contain rounded-lg bg-white border border"
-                    />
+                  <div className="flex items-center gap-3 p-3 mt-3 rounded-[12px] bg-paper">
+                    <img src={uploadedImgSrc} alt="הקובץ שהעליתם" className="w-14 h-14 object-contain rounded-[8px] bg-sheet" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-[#1C1917] truncate">{uploadedFile.name}</p>
-                      <p className="text-xs text-[#6B6560]">{fmtBytes(uploadedFile.size)}</p>
+                      <p className="m-0 text-[15px] font-medium truncate" dir="ltr" style={{ textAlign: 'right' }}>{uploadedFile.name}</p>
+                      <p className="m-0 text-[13px] text-ink-3 tabular">{fmtBytes(uploadedFile.size)}</p>
                     </div>
-                    <button
-                      onClick={removeFile}
-                      className="text-[#6B6560] hover:text-[#DC2626] transition-colors text-2xl leading-none p-1"
-                      aria-label="הסר קובץ"
-                    >×</button>
+                    <button type="button" onClick={removeFile} className="btn btn-sm" style={{ background: 'transparent', color: 'var(--ink-2)' }} aria-label="להסיר את הקובץ">
+                      <Icon name="close" size={18} />
+                    </button>
                   </div>
                 )}
 
                 {isJpgWarn && (
-                  <div className="mt-3 text-xs text-[#D97706] bg-[#FFFBEB] border-r-2 border-[#D97706] px-3 py-2.5 rounded-lg leading-relaxed">
-                    לתוצאה הטובה ביותר, השתמש ב-SVG או PNG עם שקיפות. JPG עלול לאבד פרטים עדינים בתהליך החריטה — נבדוק לפני הייצור ונפנה אליך במידת הצורך.
-                  </div>
+                  <p className="m-0 mt-3 text-[14px] text-ink-2 flex gap-2">
+                    <Icon name="alert" size={17} className="shrink-0 mt-0.5 text-pink-deep" />
+                    JPG עלול לאבד פרטים עדינים בחריטה. נבדוק את הקובץ לפני הייצור ונחזור אליכם אם צריך.
+                  </p>
                 )}
 
                 {fileError && (
-                  <p className="mt-2 text-xs text-[#DC2626] flex items-center gap-1">
-                    <span className="material-symbols-outlined text-xs">error</span>
-                    {fileError}
-                  </p>
+                  <p className="field-error m-0 mt-2"><Icon name="alert" size={15} /> {fileError}</p>
                 )}
               </SectionCard>
             )}
 
-            {/* Dynamic Custom Option Groups */}
             {customOptions.map((optGroup, idx) => {
               const currentVal = selectedOptions[optGroup.name]
               return (
-                <SectionCard
-                  key={idx}
-                  num="—"
-                  title={optGroup.name}
-                  desc={`בחר ${optGroup.name} מבין האפשרויות הזמינות.`}
-                >
-                  <div className="grid grid-cols-2 gap-3">
+                <SectionCard key={idx} num="—" title={optGroup.name}>
+                  <div className="grid grid-cols-2 gap-2.5" role="group" aria-label={optGroup.name}>
                     {optGroup.values && optGroup.values.map((v, valIdx) => {
                       const isSelected = currentVal && currentVal.label === v.label
                       return (
                         <button
                           key={valIdx}
                           type="button"
+                          aria-pressed={!!isSelected}
                           onClick={() => {
-                            setSelectedOptions(prev => ({
-                              ...prev,
-                              [optGroup.name]: v
-                            }))
+                            setSelectedOptions(prev => ({ ...prev, [optGroup.name]: v }))
                             setPreviewApproved(false)
                           }}
-                          className="flex items-center gap-3 p-3.5 rounded-xl border-2 transition-all text-right w-full justify-between"
-                          style={isSelected
-                            ? { borderColor: t.accent, background: t.accentSubtle }
-                            : { borderColor: t.border, background: '#fff' }}
+                          className="choice"
                         >
-                          <div className="flex items-center gap-2">
-                            {v.color && (
-                              <div
-                                className="w-5 h-5 rounded-full shadow-sm border border flex-shrink-0"
-                                style={{ background: v.color }}
-                              />
-                            )}
-                            <span className="font-semibold text-[#1C1917] text-sm">{v.label}</span>
-                          </div>
-                          {isSelected && (
-                            <span className="text-[t.accent] text-xs font-bold">נבחר</span>
-                          )}
+                          {v.color && <span className="w-6 h-6 rounded-full shrink-0" style={{ background: v.color, boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.15)' }} />}
+                          <span className="font-medium text-[15px]">{v.label}</span>
+                          {isSelected && <span className="tick"><Icon name="check" size={13} strokeWidth={2.6} /></span>}
                         </button>
                       )
                     })}
@@ -1091,271 +1045,184 @@ export default function Customizer() {
               )
             })}
 
-            {/* §0N Inline Live Preview Card inside the Customization Flow */}
-            <SectionCard num={nums.place} title="מיקום וגודל חריטה" desc="כוונן את המיקום והגודל של החריטה על ידי גרירה ושינוי גודל ישירות על גבי המוצר!">
-              <div className="w-full relative rounded-2xl overflow-hidden shadow-inner bg-[#F7F5F2] p-2 border border">
-                <LivePreview {...previewProps} interactive={true} />
-              </div>
-              
+            <SectionCard num={nums.place} title="מיקום וגודל" desc="גוררים את החריטה על המוצר. הפינה משנה גודל, העיגול למעלה מסובב.">
+              <LivePreview {...previewProps} interactive={true} />
+
               {!previewApproved && showTextSection && (
-                <div className="mt-5 space-y-4 border-t border pt-4">
-                  <div className="space-y-3">
-                    <h4 className="text-sm font-semibold text-[#1C1917]">הגדרות טקסט</h4>
-                    
-                    {/* Alignment controls */}
-                    <div className="space-y-1.5">
-                      <span className="text-xs text-[#6B6560]">יישור ומיקום טקסט (שמאל / מרכז / ימין):</span>
-                      <div className="flex bg-[#F7F5F2] border border rounded-xl p-1 gap-1 w-full max-w-xs">
-                        {[
-                          { id: 'right', label: 'ימין' },
-                          { id: 'center', label: 'מרכז' },
-                          { id: 'left', label: 'שמאל' },
-                        ].map(align => (
-                          <button
-                            key={align.id}
-                            type="button"
-                            onClick={() => {
-                              setTextAlignment(align.id);
-                              setPreviewApproved(false);
-                            }}
-                            className="flex-1 py-1.5 px-2 text-xs font-semibold rounded-lg transition-all"
-                            style={textAlignment === align.id
-                              ? { background: '#fff', color: t.accent, boxShadow: '0 1px 3px rgba(0,0,0,0.08)' }
-                              : { color: '#6B6560' }}
-                          >
-                            {align.label}
-                          </button>
-                        ))}
-                      </div>
-                    </div>
+                <div className="mt-6">
+                  <p className="field-label m-0">יישור הטקסט</p>
+                  <div className="seg mt-2 max-w-xs" role="group" aria-label="יישור הטקסט">
+                    {[
+                      { id: 'right', label: 'ימין' },
+                      { id: 'center', label: 'מרכז' },
+                      { id: 'left', label: 'שמאל' },
+                    ].map(align => (
+                      <button
+                        key={align.id}
+                        type="button"
+                        aria-pressed={textAlignment === align.id}
+                        onClick={() => { setTextAlignment(align.id); setPreviewApproved(false) }}
+                      >
+                        {align.label}
+                      </button>
+                    ))}
                   </div>
                 </div>
               )}
             </SectionCard>
 
-            {/* §0N Color (if multiple) */}
             {colors.length > 0 && (
-              <SectionCard num={nums.color} title="צבע המוצר" desc="בחר צבע עבור הפריט שלך.">
-                <div className="grid grid-cols-2 gap-3">
+              <SectionCard num={nums.color} title="צבע המוצר">
+                <div className="grid grid-cols-2 gap-2.5" role="group" aria-label="צבע המוצר">
                   {colors.map(c => (
-                    <button
-                      key={c}
-                      type="button"
-                      onClick={() => setSelectedColor(c)}
-                      className="py-3.5 px-4 rounded-xl border-2 transition-all flex flex-col items-center"
-                      style={selectedColor === c
-                        ? { borderColor: t.accent, background: t.accentSubtle }
-                        : { borderColor: t.border, background: '#fff' }}
-                    >
-                      <span className="font-bold text-[#1C1917] text-sm">{c}</span>
+                    <button key={c} type="button" aria-pressed={selectedColor === c} onClick={() => setSelectedColor(c)} className="choice justify-center">
+                      <span className="font-medium">{c}</span>
+                      {selectedColor === c && <span className="tick"><Icon name="check" size={13} strokeWidth={2.6} /></span>}
                     </button>
                   ))}
                 </div>
               </SectionCard>
             )}
 
-            {/* §0N Material */}
             {materials.length > 0 && customOptions.length === 0 && (
-              <SectionCard num={nums.material} title="חומר" desc="לכל חומר מאפיינים ייחודיים של חריטה.">
-                <div className="grid grid-cols-2 gap-3">
+              <SectionCard num={nums.material} title="חומר" desc="כל חומר מקבל את הלייזר קצת אחרת.">
+                <div className="grid grid-cols-2 gap-2.5" role="group" aria-label="חומר">
                   {materials.map(m => (
                     <button
                       key={m.id}
                       type="button"
+                      aria-pressed={selectedMaterial === m.id}
                       onClick={() => { setSelectedMaterial(m.id); setPreviewApproved(false) }}
-                      className="flex items-center gap-3 p-3 rounded-xl border-2 transition-all text-right"
-                      style={selectedMaterial === m.id
-                        ? { borderColor: t.accent, background: t.accentSubtle }
-                        : { borderColor: t.border, background: '#fff' }}
+                      className="choice"
                     >
-                      <div
-                        className="w-8 h-8 rounded-full shadow-sm border border flex-shrink-0"
-                        style={{ background: m.bg }}
-                      />
-                      <span className="font-semibold text-[#1C1917] text-sm">{m.label}</span>
+                      <span className="w-8 h-8 rounded-[7px] shrink-0" style={{ background: m.bg, boxShadow: 'inset 0 0 0 1px rgba(0,0,0,.15)' }} />
+                      <span className="font-medium text-[15px]">{m.label}</span>
+                      {selectedMaterial === m.id && <span className="tick"><Icon name="check" size={13} strokeWidth={2.6} /></span>}
                     </button>
                   ))}
                 </div>
               </SectionCard>
             )}
 
-            {/* Product size (if multiple) */}
             {sizes.length > 1 && (
-              <SectionCard num="—" title="גודל המוצר" desc="בחר את גודל הפריט עצמו.">
-                <div className="grid grid-cols-2 gap-3">
-                  {sizes.map(s => (
-                    <button
-                      key={s.id}
-                      onClick={() => setSelectedSize(s.id)}
-                      className="py-3 px-4 rounded-xl border-2 transition-all flex flex-col items-center"
-                      style={selectedSize === s.id
-                        ? { borderColor: t.accent, background: t.accentSubtle }
-                        : { borderColor: t.border, background: '#fff' }}
-                    >
-                      <span className="font-bold text-[#1C1917] text-sm">{s.label}</span>
-                      {s.extra > 0 && <span className="text-xs text-[#6B6560]">+₪{s.extra}</span>}
+              <SectionCard num="—" title="גודל המוצר">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5" role="group" aria-label="גודל המוצר">
+                  {sizes.map(sz => (
+                    <button key={sz.id} type="button" aria-pressed={selectedSize === sz.id} onClick={() => setSelectedSize(sz.id)} className="choice flex-col !items-center justify-center">
+                      <span className="font-medium">{sz.label}</span>
+                      {sz.extra > 0 && <span className="text-[13px] text-ink-3 tabular">+₪{sz.extra}</span>}
+                      {selectedSize === sz.id && <span className="tick"><Icon name="check" size={13} strokeWidth={2.6} /></span>}
                     </button>
                   ))}
                 </div>
               </SectionCard>
             )}
 
-            {/* §0N Proof */}
-            <SectionCard num={nums.proof} title="האם תרצה הדמיה לפני הייצור?" desc="נשלח לך רנדר לפני שנפעיל את הלייזר.">
-              <label
-                className="flex items-start gap-3 p-4 rounded-xl border-[1.5px] cursor-pointer transition-all"
-                style={wantsProof
-                  ? { borderColor: t.accent, background: t.accentSubtle }
-                  : { borderColor: t.border, background: '#F7F5F2' }}
-              >
+            <SectionCard num={nums.proof} title="שרטוט לאישור" desc="לפני שהלייזר נדלק, נשלח לכם את הקובץ הסופי.">
+              <label className={`choice !items-start cursor-pointer ${wantsProof ? 'is-on' : ''}`}>
                 <input
                   type="checkbox"
                   checked={wantsProof}
                   onChange={e => setWantsProof(e.target.checked)}
-                  className="w-4 h-4 mt-0.5 flex-shrink-0 cursor-pointer"
-                  style={{ accentColor: t.accent }}
+                  className="w-[18px] h-[18px] mt-1 shrink-0 cursor-pointer"
+                  style={{ accentColor: 'var(--blue)' }}
                 />
-                <div>
-                  <p className="text-sm font-medium text-[#1C1917]">שלח לי הדמיה דיגיטלית לפני הייצור</p>
-                  <p className="text-xs text-[#6B6560] mt-1">
-                    נשלח לדוא&quot;ל תוך 24 שעות, ללא עלות. אתה מאשר — אנחנו חורטים. אין הפתעות.
-                  </p>
-                </div>
+                <span>
+                  <span className="block font-medium">כן, שלחו לי שרטוט לפני החריטה</span>
+                  <span className="block mt-1 text-[14px] text-ink-3">במייל, בלי עלות. אתם מאשרים, אנחנו חורטים.</span>
+                </span>
               </label>
             </SectionCard>
 
-            {/* §0N Special notes */}
-            <SectionCard num={nums.notes} title="בקשות מיוחדות" desc="הערות לצוות (לא יחורט).">
+            <SectionCard num={nums.notes} title="הערות לצוות" desc="לא ייחרט על המוצר.">
               {!notesOpen ? (
-                <button
-                  onClick={() => setNotesOpen(true)}
-                  className="w-full py-3.5 border-2 border-dashed border text-[#6B6560] font-medium text-sm rounded-xl  hover:text-[t.accent] transition-colors"
-                >
-                  + הוסף הערה להזמנה
+                <button type="button" onClick={() => setNotesOpen(true)} className="btn btn-line w-full">
+                  <Icon name="plus" size={17} /> להוסיף הערה
                 </button>
               ) : (
                 <textarea
                   value={specialNotes}
                   onChange={e => setSpecialNotes(e.target.value)}
-                  placeholder="למשל: למקם את הטקסט בדיוק מתחת לידית..."
+                  placeholder="למשל: למקם את הטקסט מתחת לידית"
                   rows={3}
-                  className="w-full border-[1.5px] border rounded-xl px-4 py-3 text-sm text-[#1C1917] bg-white outline-none transition-colors focus:ring-2 focus:ring-offset-2"
+                  aria-label="הערות לצוות"
+                  className="field"
+                  style={{ resize: 'vertical' }}
+                  autoFocus
                 />
               )}
             </SectionCard>
-          </div>{/* /form column */}
+          </div>
 
-          {/* ══════════ PREVIEW COLUMN (Sticky) ══════════ */}
-          <div className="lg:sticky top-24 space-y-6">
-
-            <div className="bg-white border border rounded-2xl p-4 shadow-sm">
-              <div className="flex items-center justify-between mb-3">
-                <h3 className="font-bold text-[#1C1917]">תצוגה מקדימה</h3>
-                <span
-                  className="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-widest"
-                  style={{ background: '#F7F5F2', color: '#6B6560' }}
-                >
-                  משוערת
-                </span>
-              </div>
+          {/* ══════════ PREVIEW + TICKET (sticky) ══════════ */}
+          <aside className="lg:sticky lg:top-24 space-y-6">
+            <div className="hidden lg:block">
               <LivePreview {...previewProps} interactive={false} />
             </div>
 
-            {/* Order summary + CTA */}
-            <div className="bg-white border border rounded-2xl p-5 shadow-sm">
-              <p className="text-sm font-semibold text-[#1C1917] mb-4">סיכום הזמנה</p>
-
-              <div className="space-y-2.5 text-sm border-b border pb-4 mb-4">
-                {[
-                  ['מוצר',     product.name_he],
-                  ['חריטה',    typeLabels[engravingType]],
-                  showTextSection && ['גופן', FONT_DEFS[selectedFont]?.label],
-                  (materials.length > 0 && customOptions.length === 0) && ['חומר', material?.label],
-                  colors.length > 0 && ['צבע', selectedColor],
-                  ...Object.entries(selectedOptions).map(([k, v]) => [k, v?.label || v]),
-                  ['זמן ייצור', product.production_time || '5–7 ימי עסקים'],
-                ].filter(Boolean).map(([k, v]) => (
-                  <div key={k} className="flex justify-between items-baseline gap-2">
-                    <span className="text-[#6B6560] flex-shrink-0">{k}</span>
-                    <span className="font-medium text-[#1C1917] text-right">{v}</span>
+            <div className="ticket">
+              <div className="p-6">
+                <h2 className="m-0 font-display text-[32px]">כרטיס עבודה</h2>
+                <dl className="m-0 mt-3">
+                  {summaryRows.map(([k, v]) => (
+                    <div key={k} className="ticket-row">
+                      <dt>{k}</dt>
+                      <dd className="truncate max-w-[60%]">{v}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+              <div className="ticket-cut" aria-hidden="true" />
+              <div className="p-6">
+                <div className="flex items-center justify-between">
+                  <span className="text-ink-2">כמות</span>
+                  <div className="flex items-center gap-1 rounded-[10px] p-1 bg-paper">
+                    <button type="button" onClick={() => setQuantity(q => Math.max(1, q - 1))} className="w-9 h-9 grid place-items-center rounded-[8px] bg-sheet border-0 cursor-pointer text-ink" aria-label="להפחית כמות">
+                      <Icon name="minus" size={16} />
+                    </button>
+                    <span className="w-9 text-center font-semibold tabular" aria-live="polite">{quantity}</span>
+                    <button type="button" onClick={() => setQuantity(q => q + 1)} className="w-9 h-9 grid place-items-center rounded-[8px] bg-sheet border-0 cursor-pointer text-ink" aria-label="להוסיף כמות">
+                      <Icon name="plus" size={16} />
+                    </button>
                   </div>
-                ))}
-              </div>
-
-              {/* Quantity */}
-              <div className="flex items-center justify-between mb-4">
-                <span className="text-sm text-[#6B6560]">כמות</span>
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => setQuantity(q => Math.max(1, q - 1))}
-                    className="w-8 h-8 rounded-lg bg-[#F7F5F2] border border font-bold text-[#1C1917] hover:bg-[t.border] transition-colors text-lg leading-none"
-                  >−</button>
-                  <span className="font-bold text-[#1C1917] w-6 text-center">{quantity}</span>
-                  <button
-                    onClick={() => setQuantity(q => q + 1)}
-                    className="w-8 h-8 rounded-lg bg-[#F7F5F2] border border font-bold text-[#1C1917] hover:bg-[t.border] transition-colors text-lg leading-none"
-                  >+</button>
                 </div>
-              </div>
 
-              {/* Price */}
-              <div className="flex items-center justify-between mb-5">
-                <div className="flex flex-col text-right">
-                  <span className="text-sm font-semibold text-[#1C1917]">סה&quot;כ לתשלום</span>
-                  <span className="text-[11px] text-[#6B6560]">לפני משלוח</span>
+                <div className="flex items-end justify-between mt-6">
+                  <div>
+                    <p className="m-0 font-semibold">סה״כ</p>
+                    <p className="m-0 text-[13px] text-ink-3">לפני משלוח</p>
+                  </div>
+                  <p className="m-0 font-display text-[58px] leading-none tabular">₪{grandTotal.toFixed(0)}</p>
                 </div>
-                <span className="text-3xl font-extrabold font-headline" style={{ color: t.accent }}>
-                  ₪{grandTotal.toFixed(0)}
-                </span>
+
+                <button type="button" onClick={handleOrder} className="btn btn-pink w-full mt-6 text-[17px]" style={{ minHeight: 56 }}>
+                  להמשך ההזמנה
+                  <Icon name="arrowBack" size={18} />
+                </button>
+                <button type="button" onClick={saveForLater} className="btn btn-line w-full mt-2.5">
+                  לשמור ולהמשיך אחר כך
+                </button>
               </div>
-
-              {/* CTAs */}
-              <button
-                onClick={handleOrder}
-                className="w-full py-4 text-base font-bold text-white rounded-xl transition-all"
-                style={{ background: t.accent }}
-                onMouseEnter={e => e.currentTarget.style.background = t.accentHover}
-                onMouseLeave={e => e.currentTarget.style.background = t.accent}
-              >
-                המשך לתשלום
-              </button>
-
-              <button
-                onClick={saveForLater}
-                className="w-full py-2.5 mt-2 text-sm font-medium text-[#6B6560] bg-white border border rounded-xl hover:border-[#6B6560] hover:text-[#1C1917] transition-all"
-              >
-                שמור לאחר כך
-              </button>
             </div>
-
-          </div>{/* /preview column */}
-
+          </aside>
         </div>
-      </main>
+      </div>
 
       {/* Mobile sticky bar */}
-      <div className="fixed bottom-0 inset-x-0 lg:hidden bg-white border-t border px-4 py-3 z-50"
-           style={{ boxShadow: '0 -4px 20px rgba(0,0,0,0.09)' }}>
-        <div className="flex items-center gap-3 max-w-7xl mx-auto">
+      <div className="fixed bottom-0 inset-x-0 lg:hidden z-50 bg-sheet border-t border-[var(--rule)] px-4 py-3" style={{ boxShadow: '0 -10px 24px -18px rgba(18,19,23,.6)' }}>
+        <div className="flex items-center gap-3">
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-semibold text-[#1C1917] truncate">{product.name_he}</p>
-            <p className="text-xs text-[#6B6560]">
-              {typeLabels[engravingType]}
-              {showTextSection ? ` · ${FONT_DEFS[selectedFont]?.label}` : ''}
+            <p className="m-0 text-[14.5px] font-semibold truncate">{product.name_he}</p>
+            <p className="m-0 text-[13px] text-ink-3 truncate">
+              {typeLabels[engravingType]}{showTextSection ? ` · ${FONT_DEFS[selectedFont]?.label}` : ''}
             </p>
           </div>
-          <span className="text-base font-bold flex-shrink-0 flex flex-col items-end leading-none" style={{ color: t.accent }}>
-            <span>₪{grandTotal.toFixed(0)}</span>
-            <span className="text-[9px] text-[#6B6560] font-normal mt-0.5">לפני משלוח</span>
+          <span className="flex flex-col items-end leading-none shrink-0">
+            <span className="font-display text-[32px] tabular">₪{grandTotal.toFixed(0)}</span>
+            <span className="text-[11px] text-ink-3 mt-1">לפני משלוח</span>
           </span>
-          <button
-            onClick={handleOrder}
-            className="px-5 py-2.5 text-sm font-bold text-white rounded-xl transition-colors flex-shrink-0"
-            style={{ background: t.accent }}
-            onMouseEnter={e => e.currentTarget.style.background = t.accentHover}
-            onMouseLeave={e => e.currentTarget.style.background = t.accent}
-          >
-            המשך לתשלום
+          <button type="button" onClick={handleOrder} className="btn btn-pink btn-sm shrink-0" style={{ minHeight: 46 }}>
+            להמשך
           </button>
         </div>
       </div>
@@ -1363,8 +1230,9 @@ export default function Customizer() {
       {/* Toast */}
       {toast && (
         <div
-          className="fixed left-1/2 -translate-x-1/2 z-[100] px-5 py-3 rounded-xl text-white text-sm font-medium shadow-lg pointer-events-none"
-          style={{ bottom: '88px', background: '#1C1917', whiteSpace: 'nowrap' }}
+          role="status"
+          className="fixed left-1/2 -translate-x-1/2 z-[100] px-5 py-3 rounded-[12px] text-white text-[15px] font-medium pointer-events-none bg-ink"
+          style={{ bottom: 96, whiteSpace: 'nowrap', boxShadow: '0 14px 30px -14px rgba(0,0,0,.7)' }}
         >
           {toast}
         </div>

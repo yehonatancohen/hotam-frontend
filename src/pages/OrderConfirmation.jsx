@@ -1,25 +1,25 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link } from 'react-router-dom'
 import axios from 'axios'
-import { useTheme } from '../context/ThemeContext'
+import Icon, { waLink } from '../components/Icon'
 
 const API = import.meta.env.VITE_API_URL
 
 const STATUS_LABELS = {
-  pending: 'ממתינה לאישור',
+  pending: 'מחכה לאישור שלכם',
   confirmed: 'אושרה',
-  in_production: 'בייצור',
+  in_production: 'בחריטה',
   ready: 'מוכנה לאיסוף',
-  shipped: 'נשלחה',
-  delivered: 'נמסרה',
+  shipped: 'בדרך אליכם',
+  delivered: 'הגיעה',
   cancelled: 'בוטלה',
+  out_of_stock: 'התקבלה, נחזור אליכם',
 }
 
 export default function OrderConfirmation() {
   const { orderId } = useParams()
   const [order, setOrder] = useState(null)
   const [loading, setLoading] = useState(true)
-  const { theme: t } = useTheme()
 
   useEffect(() => {
     if (!orderId) return
@@ -31,120 +31,78 @@ export default function OrderConfirmation() {
 
   if (loading) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <span className="animate-spin material-symbols-outlined text-4xl" style={{ color: t.accent }}>autorenew</span>
+      <div className="min-h-[60vh] grid place-items-center text-ink-3" role="status">
+        <span className="flex items-center gap-3"><Icon name="spinner" size={22} /> מחפשים את ההזמנה…</span>
       </div>
     )
   }
 
   if (!order) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center" style={{ background: t.bg, color: t.text }}>
-        <div className="text-center space-y-4">
-          <h2 className="font-headline font-bold text-2xl">הזמנה לא נמצאה</h2>
-          <Link 
-            to="/" 
-            className="inline-block px-8 py-3 rounded-lg font-bold border-0 cursor-pointer text-sm"
-            style={{ background: t.accent, color: t.accentText }}
-          >
-            חזרה לדף הבית
-          </Link>
+      <div className="wrap py-24">
+        <div className="sheet text-center px-6 py-16 max-w-xl mx-auto">
+          <h1 className="font-display text-[44px] m-0">לא מצאנו את ההזמנה הזאת</h1>
+          <p className="m-0 mt-2 text-ink-2">שלחו לנו את מספר ההזמנה בוואטסאפ ונבדוק.</p>
+          <div className="flex flex-wrap justify-center gap-3 mt-6">
+            <a href={waLink(`היי חותם, אני מחפש/ת את הזמנה ${orderId}`)} target="_blank" rel="noopener noreferrer" className="btn btn-pink">
+              <Icon name="whatsapp" size={18} /> לשאול בוואטסאפ
+            </a>
+            <Link to="/" className="btn btn-line">לדף הבית</Link>
+          </div>
         </div>
       </div>
     )
   }
 
+  const rows = [
+    ['מוצר', order.product_name],
+    ['טקסט', order.engraving_text || '—'],
+    ['חומר', order.material],
+    ['כמות', order.quantity],
+  ]
+
   return (
-    <div dir="rtl" className="max-w-3xl mx-auto px-6 md:px-8 py-16 md:py-24 text-right transition-colors duration-300" style={{ background: t.bg, color: t.text }}>
-      {/* Success animation */}
-      <div className="text-center mb-12">
-        <div className="inline-flex items-center justify-center w-24 h-24 rounded-full mb-6" style={{ background: t.accentSubtle }}>
-          <span className="material-symbols-outlined text-5xl" style={{ color: t.accent, fontVariationSettings: "'FILL' 1" }}>
-            check_circle
-          </span>
-        </div>
-        <h1 className="font-headline font-black text-4xl md:text-5xl mb-4" style={{ color: t.text }}>
-          ההזמנה התקבלה!
+    <div className="wrap py-12 md:py-20 max-w-3xl">
+      <div className="slab" style={{ padding: 'clamp(40px, 5vw, 60px) clamp(26px, 5vw, 56px)' }}>
+        <h1 className="font-display m-0 text-white" style={{ fontSize: 'clamp(54px, 6.9vw, 87px)', lineHeight: 0.9 }}>
+          תודה, {order.customer_name}.
         </h1>
-        <p className="text-xl" style={{ color: t.textSub }}>
-          תודה {order.customer_name}! אנחנו נשלח לך אישור לכתובת {order.customer_email}
+        <p className="m-0 mt-4 text-[18px] text-on-blue-2">
+          אישור נשלח ל־<span dir="ltr">{order.customer_email}</span>. השרטוט לאישור יגיע לשם, והלייזר נדלק רק אחרי שתאשרו.
         </p>
       </div>
 
-      {/* Order details card */}
-      <div 
-        className="rounded-xl border overflow-hidden mb-8" 
-        style={{ background: t.bgCard, borderColor: t.border, boxShadow: t.shadow }}
-      >
-        <div className="p-6 md:p-8 border-b" style={{ borderColor: t.border }}>
-          <div className="flex justify-between items-center">
-            <span 
-              className="px-3 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider"
-              style={{
-                background: order.status === 'pending' ? 'rgba(234, 179, 8, 0.15)' : 'rgba(0, 94, 151, 0.15)',
-                color: order.status === 'pending' ? 'rgb(161, 98, 7)' : t.accent
-              }}
-            >
-              {STATUS_LABELS[order.status] || order.status}
-            </span>
-            <div className="text-right">
-              <div className="text-xs uppercase tracking-widest" style={{ color: t.textMuted }}>מספר הזמנה</div>
-              <div className="font-headline font-bold" style={{ color: t.text }}>{order.id}</div>
-            </div>
+      <div className="ticket mt-8">
+        <div className="p-6 md:p-8 flex flex-wrap items-baseline justify-between gap-4">
+          <div>
+            <p className="m-0 text-[14px] text-ink-3">מספר הזמנה</p>
+            <p className="m-0 font-display text-[35px] tabular" dir="ltr" style={{ textAlign: 'right' }}>{order.id}</p>
           </div>
+          <span className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-paper text-[14px] font-medium">
+            <span className="live-dot" aria-hidden="true" />
+            {STATUS_LABELS[order.status] || order.status}
+          </span>
         </div>
-
-        <div className="p-6 md:p-8 space-y-5">
-          <div className="grid grid-cols-2 gap-4">
-            {[
-              { label: 'מוצר', value: order.product_name },
-              { label: 'טקסט חריטה', value: order.engraving_text || '—' },
-              { label: 'חומר', value: order.material },
-              { label: 'כמות', value: order.quantity },
-            ].map(item => (
-              <div key={item.label}>
-                <div className="text-xs uppercase tracking-widest mb-0.5" style={{ color: t.textMuted }}>{item.label}</div>
-                <div className="font-headline font-semibold" style={{ color: t.text }}>{item.value}</div>
-              </div>
+        <div className="ticket-cut" aria-hidden="true" />
+        <div className="p-6 md:p-8">
+          <dl className="m-0">
+            {rows.map(([k, v]) => (
+              <div key={k} className="ticket-row"><dt>{k}</dt><dd>{v}</dd></div>
             ))}
+          </dl>
+          <div className="flex items-end justify-between mt-4 pt-4 border-t-2 border-ink">
+            <span className="font-semibold">סה״כ</span>
+            <span className="font-display text-[52px] leading-none tabular">₪{Number(order.total).toFixed(2)}</span>
           </div>
-
-          <div className="pt-5 border-t flex justify-between items-baseline" style={{ borderColor: t.border }}>
-            <span className="font-headline font-extrabold text-lg" style={{ color: t.text }}>סה&quot;כ שולם</span>
-            <span className="font-headline font-black text-3xl" style={{ color: t.accent }}>₪{Number(order.total).toFixed(2)}</span>
-          </div>
+          <p className="m-0 mt-5 flex items-center gap-2 text-ink-2 text-[15px]">
+            <Icon name="truck" size={18} /> 5–7 ימי עסקים מאישור השרטוט
+          </p>
         </div>
       </div>
 
-      {/* Delivery info */}
-      <div className="rounded-xl p-6 flex items-center gap-4 mb-8" style={{ background: t.accentSubtle }}>
-        <span className="material-symbols-outlined text-3xl" style={{ color: t.accent }}>local_shipping</span>
-        <div>
-          <div className="font-headline font-bold" style={{ color: t.text }}>זמן אספקה משוער</div>
-          <div style={{ color: t.textSub }}>5-7 ימי עסקים מרגע אישור ההזמנה</div>
-        </div>
-      </div>
-
-      {/* Actions */}
-      <div className="flex flex-col sm:flex-row-reverse gap-4 justify-center">
-        <Link 
-          to="/products" 
-          className="px-8 py-3 text-center rounded-lg font-bold transition-all duration-200 border-0 cursor-pointer text-sm"
-          style={{ background: t.accent, color: t.accentText }}
-          onMouseEnter={e => e.currentTarget.style.background = t.accentHover}
-          onMouseLeave={e => e.currentTarget.style.background = t.accent}
-        >
-          הזמינו עוד
-        </Link>
-        <Link 
-          to="/" 
-          className="flex items-center justify-center gap-2 px-8 py-3 font-bold rounded-lg border transition-colors text-sm"
-          style={{ background: t.bgCard, borderColor: t.border, color: t.textSub }}
-          onMouseEnter={e => e.currentTarget.style.borderColor = t.text}
-          onMouseLeave={e => e.currentTarget.style.borderColor = t.border}
-        >
-          חזרה לדף הבית
-        </Link>
+      <div className="flex flex-wrap gap-3 mt-8">
+        <Link to="/products" className="btn btn-pink">עוד משהו לחרוט <Icon name="arrowBack" size={18} /></Link>
+        <Link to="/" className="btn btn-line">לדף הבית</Link>
       </div>
     </div>
   )

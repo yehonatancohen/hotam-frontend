@@ -1,61 +1,30 @@
 import { useEffect, useState } from 'react'
 import { useParams, Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
-import { useTheme } from '../context/ThemeContext'
-
-const API = import.meta.env.VITE_API_URL
-const STATIC_BASE = import.meta.env.VITE_STATIC_BASE
-
-const FALLBACK_IMGS = {
-  drinkware: 'https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=900&q=80&fit=crop',
-  accessories: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=900&q=80&fit=crop',
-  signage: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=900&q=80&fit=crop',
-  home_decor: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=900&q=80&fit=crop',
-  gifts: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=900&q=80&fit=crop',
-  mixed: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=900&q=80&fit=crop',
-}
-
-const CATEGORY_LABELS = {
-  drinkware: 'כלי שתייה', accessories: 'אביזרים', signage: 'שילוט',
-  home_decor: 'עיצוב הבית', gifts: 'מתנות', mixed: 'מגוון'
-}
+import ProductVisual from '../components/ProductVisual'
+import Icon, { waLink } from '../components/Icon'
+import { API, CATEGORY_LABELS, formatPrice, imgSrc, materialLabel } from '../lib/catalog'
 
 const SITE_URL = 'https://hatam-laser.co.il'
 const BASE_TITLE = 'חותם | חריטת לייזר אישית על עץ, עור ומתכת – ישראל'
 const BASE_DESC = 'סטודיו חותם – חריטת לייזר אישית על עץ, עור ומתכת. מתנות מחורטות מיוחדות, שילוט עסקי ומיתוג ייחודי.'
-
-const FEATURES_BY_CATEGORY = {
-  drinkware: ['חריטה עמידה למים', 'מתאים לשטיפה במדיח', 'חריטה מדויקת ועמידה', 'גימור פרימיום'],
-  accessories: ['עור איכותי בדרגה A', 'חריטה מונולית', 'מתנה בקופסת מתנה', 'כתב יד / מודרני / קלאסי'],
-  signage: ['אקריליק 5mm', 'עמיד UV', 'גדלים מותאמים אישית', 'עיגון קיר כלול'],
-  home_decor: ['עץ אלון מלא', 'גימור שמן טבעי', 'מידות לפי בחירה', 'תלייה קלה'],
-  gifts: ['קופסת מתנה מעוצבת', 'כרטיס ברכה אישי', 'ניתן לעיצוב מלא', 'משלוח מהיר'],
-  mixed: ['חומרים איכותיים', 'חריטה מדויקת', 'מותאם אישית', 'אחריות מלאה'],
-}
-
-function imgSrc(product) {
-  if (!product?.image_url) return FALLBACK_IMGS[product?.category] || FALLBACK_IMGS.mixed
-  return product.image_url.startsWith('/') ? STATIC_BASE + product.image_url : product.image_url
-}
+const OG_FALLBACK = `${SITE_URL}/logo.png`
 
 export default function ProductDetail() {
   const { productId } = useParams()
   const navigate = useNavigate()
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
-  const [relatedProducts, setRelatedProducts] = useState([])
-  const { theme: t } = useTheme()
+  const [related, setRelated] = useState([])
 
   useEffect(() => {
+    setLoading(true)
     axios.get(`${API}/products/${productId}`)
       .then(r => {
         setProduct(r.data.data)
         return axios.get(`${API}/products`)
       })
-      .then(r => {
-        const all = r.data.data || []
-        setRelatedProducts(all.filter(p => p.id !== productId).slice(0, 3))
-      })
+      .then(r => setRelated((r.data.data || []).filter(p => p.id !== productId).slice(0, 3)))
       .catch(() => {})
       .finally(() => setLoading(false))
   }, [productId])
@@ -63,25 +32,25 @@ export default function ProductDetail() {
   useEffect(() => {
     if (!product) return
     const desc = `${product.name_he} – ${product.description_he || 'חריטת לייזר אישית'} | חותם סטודיו לייזר`
+    const image = imgSrc(product) || OG_FALLBACK
     document.title = `${product.name_he} – חריטת לייזר אישית | חותם`
     const metaDesc = document.querySelector('meta[name="description"]')
     if (metaDesc) metaDesc.setAttribute('content', desc)
-    
+
     let canonical = document.querySelector('link[rel="canonical"]')
     if (!canonical) { canonical = document.createElement('link'); canonical.rel = 'canonical'; document.head.appendChild(canonical) }
     canonical.href = `${SITE_URL}/products/${productId}`
-    
+
     const ogTitle = document.querySelector('meta[property="og:title"]')
     const ogDesc = document.querySelector('meta[property="og:description"]')
     const ogImg = document.querySelector('meta[property="og:image"]')
     const ogUrl = document.querySelector('meta[property="og:url"]')
     if (ogTitle) ogTitle.setAttribute('content', `${product.name_he} | חותם`)
     if (ogDesc) ogDesc.setAttribute('content', desc)
-    if (ogImg) ogImg.setAttribute('content', imgSrc(product))
+    if (ogImg) ogImg.setAttribute('content', image)
     if (ogUrl) ogUrl.setAttribute('content', `${SITE_URL}/products/${productId}`)
-    
-    const existing = document.getElementById('product-schema')
-    if (existing) existing.remove()
+
+    document.getElementById('product-schema')?.remove()
     const script = document.createElement('script')
     script.type = 'application/ld+json'
     script.id = 'product-schema'
@@ -91,16 +60,16 @@ export default function ProductDetail() {
         '@type': 'Product',
         name: product.name_he,
         description: product.description_he || product.description,
-        image: imgSrc(product),
+        image,
         brand: { '@type': 'Brand', name: 'חותם' },
         offers: {
           '@type': 'Offer',
           price: product.price,
           priceCurrency: 'ILS',
-          availability: 'https://schema.org/InStock',
+          availability: 'https://schema.org/PreOrder',
           url: `${SITE_URL}/products/${productId}`,
-          seller: { '@type': 'Organization', name: 'חותם - סטודיו לייזר' }
-        }
+          seller: { '@type': 'Organization', name: 'חותם - סטודיו לייזר' },
+        },
       },
       {
         '@context': 'https://schema.org',
@@ -109,8 +78,8 @@ export default function ProductDetail() {
           { '@type': 'ListItem', position: 1, name: 'ראשי', item: `${SITE_URL}/` },
           { '@type': 'ListItem', position: 2, name: 'מוצרים', item: `${SITE_URL}/products` },
           { '@type': 'ListItem', position: 3, name: product.name_he, item: `${SITE_URL}/products/${productId}` },
-        ]
-      }
+        ],
+      },
     ])
     document.head.appendChild(script)
     return () => {
@@ -119,7 +88,7 @@ export default function ProductDetail() {
       canonical.href = `${SITE_URL}/`
       if (ogTitle) ogTitle.setAttribute('content', 'חותם | חריטת לייזר אישית על עץ, עור ומתכת')
       if (ogDesc) ogDesc.setAttribute('content', BASE_DESC)
-      if (ogImg) ogImg.setAttribute('content', 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=1200&q=85&fit=crop')
+      if (ogImg) ogImg.setAttribute('content', OG_FALLBACK)
       if (ogUrl) ogUrl.setAttribute('content', `${SITE_URL}/`)
       document.getElementById('product-schema')?.remove()
     }
@@ -127,191 +96,134 @@ export default function ProductDetail() {
 
   if (loading) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center">
-        <span className="animate-spin material-symbols-outlined text-4xl" style={{ color: t.accent }}>autorenew</span>
+      <div className="min-h-[60vh] grid place-items-center text-ink-3" role="status">
+        <span className="flex items-center gap-3"><Icon name="spinner" size={22} /> טוענים…</span>
       </div>
     )
   }
 
   if (!product) {
     return (
-      <div className="min-h-[60vh] flex items-center justify-center text-center px-4" style={{ background: t.bg, color: t.text }}>
-        <div>
-          <h2 className="font-headline font-bold text-2xl mb-4">המוצר לא נמצא</h2>
-          <Link 
-            to="/products" 
-            className="px-8 py-3 rounded-xl font-bold text-base inline-block"
-            style={{ background: t.accent, color: t.accentText }}
-          >
-            חזרה למוצרים
-          </Link>
+      <div className="wrap py-24">
+        <div className="sheet text-center px-6 py-16 max-w-xl mx-auto">
+          <h1 className="font-display text-[44px] m-0">המוצר הזה לא נמצא</h1>
+          <p className="m-0 mt-2 text-ink-2">אולי הוא ירד מהלוח. יש עוד הרבה מה לחרוט.</p>
+          <Link to="/products" className="btn btn-pink mt-6">לכל המוצרים</Link>
         </div>
       </div>
     )
   }
 
-  const isMetalProduct = product?.materials && (
-    product.materials.includes('ברזל') || 
-    product.materials.includes('מתכת') || 
-    product.materials.includes('metal') || 
-    product.materials.includes('steel')
-  )
+  // "שעון קיר 'מונולית' - עץ אלון" → title plus a material subline, so no line opens with a dash.
+  const [title, ...rest] = product.name_he.split(' - ')
+  const subtitle = rest.join(' - ')
 
-  let features = FEATURES_BY_CATEGORY[product.category] || FEATURES_BY_CATEGORY.mixed
-  if (product.features) {
-    features = product.features.split(',').map(f => f.trim()).filter(Boolean)
-  } else if (product.category === 'accessories' && isMetalProduct) {
-    features = ['מתכת עמידה ואיכותית', 'חריטה מונולית', 'מתנה בקופסת מתנה', 'כתב יד / מודרני / קלאסי']
-  }
+  // Only facts the studio entered in the dashboard; nothing invented per category.
+  const features = product.features ? product.features.split(',').map(f => f.trim()).filter(Boolean) : []
+  const specs = [
+    ['חומר', materialLabel(product.materials)],
+    ['קטגוריה', CATEGORY_LABELS[product.category]],
+    ['זמן הכנה', product.production_time || '5–7 ימי עסקים מאישור השרטוט'],
+  ].filter(([, v]) => v)
 
   return (
-    <div dir="rtl" className="transition-colors duration-300" style={{ background: t.bg, color: t.text }}>
-      {/* Breadcrumb */}
-      <div className="px-6 md:px-8 pt-8 pb-0 max-w-7xl mx-auto">
-        <nav className="flex items-center gap-2 text-sm" style={{ color: t.textSub }}>
-          <Link to="/" className="transition-colors" onMouseEnter={e => e.currentTarget.style.color = t.text} onMouseLeave={e => e.currentTarget.style.color = t.textSub}>ראשי</Link>
-          <span className="material-symbols-outlined text-sm">chevron_left</span>
-          <Link to="/products" className="transition-colors" onMouseEnter={e => e.currentTarget.style.color = t.text} onMouseLeave={e => e.currentTarget.style.color = t.textSub}>מוצרים</Link>
-          <span className="material-symbols-outlined text-sm">chevron_left</span>
-          <span style={{ color: t.text }}>{product.name_he}</span>
-        </nav>
-      </div>
+    <div>
+      <nav className="wrap pt-6 text-[14.5px] text-ink-3" aria-label="פירורי לחם">
+        <ol className="list-none m-0 p-0 flex flex-wrap items-center gap-1.5">
+          <li><Link to="/" className="link-u">ראשי</Link></li>
+          <li aria-hidden="true"><Icon name="chevron" size={14} /></li>
+          <li><Link to="/products" className="link-u">מוצרים</Link></li>
+          <li aria-hidden="true"><Icon name="chevron" size={14} /></li>
+          <li className="text-ink" aria-current="page">{product.name_he}</li>
+        </ol>
+      </nav>
 
-      {/* Main product section */}
-      <section className="py-10 md:py-16 px-6 md:px-8">
-        <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 items-start">
-          {/* Left: image */}
-          <div className="relative">
-            <div 
-              className="aspect-square rounded-2xl overflow-hidden shadow-lg border"
-              style={{ background: t.bgAlt, borderColor: t.border, boxShadow: t.shadow }}
-            >
-              <img
-                src={imgSrc(product)}
-                alt={product.name_he}
-                className="w-full h-full object-contain mix-blend-multiply bg-[#FAF8F5]"
-              />
-            </div>
-            {/* Category badge */}
-            <div 
-              className="absolute top-4 right-4 backdrop-blur-sm px-3 py-1.5 rounded-full text-xs font-label font-bold shadow"
-              style={{ background: t.bgCard, color: t.text }}
-            >
-              {CATEGORY_LABELS[product.category] || product.category}
-            </div>
+      <section className="wrap py-8 md:py-12 grid gap-10 lg:gap-16 lg:grid-cols-[1.1fr_1fr] items-start">
+        <div className="lg:sticky lg:top-24">
+          <div className="slab-yellow">
+            <ProductVisual product={product} className="aspect-square" size="lg" tilt={-3} />
           </div>
+          {!product.image_url && (
+            <p className="m-0 mt-3 text-[14px] text-ink-3">זה איור של המוצר עם הכיתוב שלכם. צילום אמיתי בדרך.</p>
+          )}
+        </div>
 
-          {/* Right: info + CTA */}
-          <div className="flex flex-col text-right">
-            <h1 className="font-headline font-black text-4xl md:text-5xl tracking-tight mb-4" style={{ color: t.text }}>
-              {product.name_he}
-            </h1>
-            <p className="text-lg leading-relaxed mb-8 font-light" style={{ color: t.textSub }}>
-              {product.description_he || product.description}
-            </p>
+        <div>
+          <h1 className="font-display m-0" style={{ fontSize: 'clamp(54px, 6.6vw, 87px)', lineHeight: 0.9 }}>
+            {title}
+            {subtitle && <span className="block mt-2 text-ink-3" style={{ fontSize: '0.5em' }}>{subtitle}</span>}
+          </h1>
+          {(product.description_he || product.description) && (
+            <p className="m-0 mt-5 text-[18px] text-ink-2 max-w-[52ch]">{product.description_he || product.description}</p>
+          )}
 
-            {/* Features */}
-            <div className="grid grid-cols-2 gap-3 mb-8">
-              {features.map((f, i) => (
-                <div 
-                  key={i} 
-                  className="flex items-center gap-2.5 rounded-xl px-3 py-2.5 border"
-                  style={{ background: t.bgCard, borderColor: t.border }}
-                >
-                  <span className="material-symbols-outlined text-base" style={{ color: t.accent, fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                  <span className="text-sm font-label" style={{ color: t.textSub }}>{f}</span>
-                </div>
+          <dl className="m-0 mt-8 border-t-2 border-ink">
+            {specs.map(([k, v]) => (
+              <div key={k} className="flex justify-between gap-6 py-3.5 border-b border-[var(--rule-strong)]">
+                <dt className="text-ink-3">{k}</dt>
+                <dd className="m-0 font-medium text-end">{v}</dd>
+              </div>
+            ))}
+          </dl>
+
+          {features.length > 0 && (
+            <ul className="list-none m-0 p-0 mt-6 grid gap-2.5">
+              {features.map(f => (
+                <li key={f} className="flex items-center gap-2.5 text-ink-2">
+                  <Icon name="check" size={18} className="text-blue shrink-0" />
+                  {f}
+                </li>
               ))}
+            </ul>
+          )}
+
+          <div className="ticket mt-10">
+            <div className="p-6 md:p-7 flex items-end justify-between gap-4">
+              <div>
+                <p className="m-0 text-[14px] text-ink-3">מחיר ליחידה, כולל חריטה</p>
+                <p className="m-0 mt-1 font-display text-[64px] leading-none tabular">{formatPrice(product.price)}</p>
+              </div>
+              <p className="m-0 text-[14px] text-ink-3 text-end max-w-[18ch]">משלוח חינם בהזמנה מעל ₪300</p>
             </div>
-
-            {/* Materials preview */}
-            {product.materials && (
-              <div className="mb-8">
-                <div className="text-xs font-bold uppercase tracking-widest mb-2" style={{ color: t.textMuted }}>חומרים זמינים</div>
-                <p className="font-body" style={{ color: t.textSub }}>{product.materials}</p>
-              </div>
-            )}
-
-            {/* Price + CTA */}
-            <div className="rounded-2xl p-6 border" style={{ background: t.bgCard, borderColor: t.border, boxShadow: t.shadow }}>
-              <div className="flex items-baseline justify-between mb-5">
-                <div>
-                  <div className="text-xs mb-0.5" style={{ color: t.textMuted }}>מחיר מתחיל מ</div>
-                  <div className="font-headline font-black text-4xl" style={{ color: t.accent }}>₪{product.price}</div>
-                  <div className="text-xs mt-0.5" style={{ color: t.textMuted }}>כולל מע"מ ומשלוח</div>
-                </div>
-                <div className="flex items-center gap-1.5 text-sm" style={{ color: t.textSub }}>
-                  <span className="material-symbols-outlined text-base">local_shipping</span>
-                  {product.production_time || '5–7 ימי עסקים'}
-                </div>
-              </div>
-              <button
-                onClick={() => navigate(`/customizer/${product.id}`)}
-                className="w-full py-4 text-xl flex items-center justify-center gap-3 rounded-xl border-0 font-bold transition-all duration-200"
-                style={{ background: t.accent, color: t.accentText }}
-                onMouseEnter={e => { e.currentTarget.style.background = t.accentHover; e.currentTarget.style.transform = 'translateY(-1px)' }}
-                onMouseLeave={e => { e.currentTarget.style.background = t.accent; e.currentTarget.style.transform = '' }}
-              >
-                <span className="material-symbols-outlined">edit</span>
-                התאמה אישית והזמנה
+            <div className="ticket-cut" aria-hidden="true" />
+            <div className="p-6 md:p-7">
+              <button type="button" onClick={() => navigate(`/customizer/${product.id}`)} className="btn btn-pink w-full text-[17px]" style={{ minHeight: 56 }}>
+                <Icon name="pen" size={19} />
+                לעצב את החריטה
               </button>
-            </div>
-
-            {/* Trust signals */}
-            <div className="flex flex-wrap gap-4 mt-5 text-xs" style={{ color: t.textMuted }}>
-              {[
-                { icon: 'lock', label: 'תשלום מאובטח' },
-                { icon: 'replay', label: 'החזרה בתוך 30 יום' },
-                { icon: 'verified', label: 'מוצר מקורי מהסטודיו' },
-              ].map(ts => (
-                <div key={ts.label} className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-sm">{ts.icon}</span>
-                  {ts.label}
-                </div>
-              ))}
+              <p className="m-0 mt-4 text-[14.5px] text-ink-2 flex items-start gap-2">
+                <Icon name="check" size={17} className="text-blue shrink-0 mt-0.5" />
+                לפני שמתחילים לחרוט שולחים לכם שרטוט לאישור. בלי אישור שלכם, הלייזר לא נדלק.
+              </p>
+              <a
+                href={waLink(`היי חותם, יש לי שאלה על ${product.name_he}.`)}
+                target="_blank" rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 mt-4 text-[15px] link-u"
+              >
+                <Icon name="whatsapp" size={16} /> שאלה על המוצר בוואטסאפ
+              </a>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Related products */}
-      {relatedProducts.length > 0 && (
-        <section className="py-16 px-6 md:px-8 transition-colors duration-300" style={{ background: t.bgAlt, borderTop: `1px solid ${t.border}` }}>
-          <div className="max-w-7xl mx-auto">
-            <h2 className="font-headline font-extrabold text-3xl mb-8 tracking-tight" style={{ color: t.text }}>מוצרים נוספים</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-              {relatedProducts.map(p => (
-                <Link
-                  key={p.id}
-                  to={`/products/${p.id}`}
-                  className="group rounded-2xl overflow-hidden transition-all shadow-sm"
-                  style={{
-                    background: t.bgCard,
-                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)',
-                  }}
-                  onMouseEnter={e => {
-                    e.currentTarget.style.boxShadow = t.shadow;
-                    e.currentTarget.style.transform = 'translateY(-4px)';
-                  }}
-                  onMouseLeave={e => {
-                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.02)';
-                    e.currentTarget.style.transform = '';
-                  }}
-                >
-                  <div className="aspect-video overflow-hidden" style={{ background: t.bgAlt }}>
-                    <img
-                      src={imgSrc(p)}
-                      alt={p.name_he}
-                      className="w-full h-full object-contain mix-blend-multiply group-hover:scale-105 transition-transform duration-500"
-                    />
-                  </div>
-                  <div className="p-5 text-right">
-                    <h3 className="font-headline font-bold mb-1 transition-colors group-hover:text-primary" style={{ color: t.text }}>{p.name_he}</h3>
-                    <span className="font-headline font-bold" style={{ color: t.accent }}>₪{p.price}</span>
-                  </div>
-                </Link>
+      {related.length > 0 && (
+        <section className="border-t border-[var(--rule)] bg-paper-2">
+          <div className="wrap py-16 md:py-20">
+            <h2 className="font-display m-0 text-[clamp(48px,5vw,72px)]">עוד דברים לחרוט</h2>
+            <ul className="list-none m-0 p-0 mt-8 grid gap-x-6 gap-y-10 sm:grid-cols-3">
+              {related.map(p => (
+                <li key={p.id}>
+                  <Link to={`/products/${p.id}`} className="group block">
+                    <ProductVisual product={p} className="aspect-[5/4]" size="sm" tilt={3} zoom />
+                    <div className="mt-4 flex justify-between gap-4">
+                      <span className="font-semibold group-hover:hl">{p.name_he}</span>
+                      <span className="font-semibold tabular">{formatPrice(p.price)}</span>
+                    </div>
+                  </Link>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         </section>
       )}

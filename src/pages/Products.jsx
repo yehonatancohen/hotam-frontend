@@ -1,55 +1,23 @@
 import { useEffect, useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import axios from 'axios'
+import { Link } from 'react-router-dom'
+import ProductVisual from '../components/ProductVisual'
+import Icon, { WA_URL } from '../components/Icon'
 import { useTheme } from '../context/ThemeContext'
-
-const API = import.meta.env.VITE_API_URL
-const STATIC_BASE = import.meta.env.VITE_STATIC_BASE
-
-const FALLBACK_IMGS = {
-  drinkware: 'https://images.unsplash.com/photo-1514228742587-6b1558fcca3d?w=600&q=80&fit=crop',
-  accessories: 'https://images.unsplash.com/photo-1548036328-c9fa89d128fa?w=600&q=80&fit=crop',
-  signage: 'https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=600&q=80&fit=crop',
-  home_decor: 'https://images.unsplash.com/photo-1556909114-f6e7ad7d3136?w=600&q=80&fit=crop',
-  gifts: 'https://images.unsplash.com/photo-1549465220-1a8b9238cd48?w=600&q=80&fit=crop',
-  mixed: 'https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?w=600&q=80&fit=crop',
-}
-
-const CATEGORY_LABELS = {
-  drinkware: 'כלי שתייה', accessories: 'אביזרים', signage: 'שילוט',
-  home_decor: 'עיצוב הבית', gifts: 'מתנות', mixed: 'מגוון'
-}
-
-function imgSrc(product) {
-  if (!product.image_url) return FALLBACK_IMGS[product.category] || FALLBACK_IMGS.mixed
-  return product.image_url.startsWith('/') ? STATIC_BASE + product.image_url : product.image_url
-}
-
-async function fetchWithRetry(url, retries = 4, delay = 3000) {
-  for (let i = 0; i < retries; i++) {
-    try {
-      return await axios.get(url, { timeout: 12000 })
-    } catch (err) {
-      if (i === retries - 1) throw err
-      await new Promise(res => setTimeout(res, delay))
-    }
-  }
-}
+import { API, CATEGORY_LABELS, fetchWithRetry, formatPrice, materialLabel } from '../lib/catalog'
 
 const BASE_TITLE = 'חותם | חריטת לייזר אישית על עץ, עור ומתכת – ישראל'
 const BASE_DESC = 'סטודיו חותם – חריטת לייזר אישית על עץ, עור ומתכת. מתנות מחורטות מיוחדות, שילוט עסקי ומיתוג ייחודי.'
 
 export default function Products() {
   const [products, setProducts] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
+  const [status, setStatus] = useState('loading')
   const [activeCategory, setActiveCategory] = useState('all')
-  const { theme: t } = useTheme()
+  const { visitorName } = useTheme()
 
   useEffect(() => {
     document.title = 'כל המוצרים – חריטת לייזר אישית | חותם'
     const meta = document.querySelector('meta[name="description"]')
-    if (meta) meta.setAttribute('content', 'עיינו בכל מוצרי חריטת הלייזר של חותם – כלי שתייה, אביזרי עור, שילוט, עיצוב הבית ומתנות. כל פריט מותאם אישית.')
+    if (meta) meta.setAttribute('content', 'כל מוצרי חריטת הלייזר של חותם: כלי שתייה, עור, שילוט, פריטים לבית ומתנות. כל פריט מותאם אישית.')
     return () => {
       document.title = BASE_TITLE
       if (meta) meta.setAttribute('content', BASE_DESC)
@@ -57,185 +25,119 @@ export default function Products() {
   }, [])
 
   const load = () => {
-    setLoading(true)
-    setError(false)
+    setStatus('loading')
     fetchWithRetry(`${API}/products`)
-      .then(r => setProducts(r.data.data || []))
-      .catch(() => setError(true))
-      .finally(() => setLoading(false))
+      .then(r => { setProducts(r.data.data || []); setStatus('ready') })
+      .catch(() => setStatus('error'))
   }
-
-  useEffect(() => { load() }, [])
+  useEffect(load, [])
 
   const categories = ['all', ...new Set(products.map(p => p.category))]
   const filtered = activeCategory === 'all' ? products : products.filter(p => p.category === activeCategory)
+  const count = (cat) => cat === 'all' ? products.length : products.filter(p => p.category === cat).length
 
   return (
-    <div dir="rtl" className="transition-colors duration-300" style={{ background: t.bg, color: t.text }}>
-      {/* Page header */}
-      <section className="py-16 md:py-24 px-6 md:px-8 border-b" style={{ background: t.bg, borderColor: t.border }}>
-        <div className="max-w-7xl mx-auto">
-          <Link 
-            to="/" 
-            className="inline-flex items-center gap-1.5 text-sm mb-8 transition-colors"
-            style={{ color: t.textSub }}
-            onMouseEnter={e => e.currentTarget.style.color = t.text}
-            onMouseLeave={e => e.currentTarget.style.color = t.textSub}
-          >
-            <span className="material-symbols-outlined text-base">arrow_forward</span>
-            חזרה לדף הבית
-          </Link>
-          <h1 className="font-headline font-black text-5xl md:text-7xl tracking-tighter mb-4" style={{ color: t.text }}>
+    <div>
+      <section className="wrap pt-6 md:pt-10 pb-10">
+        <div className="slab" style={{ padding: 'clamp(40px, 5vw, 64px) clamp(26px, 5vw, 64px)' }}>
+          <h1 className="font-display m-0 text-white" style={{ fontSize: 'clamp(60px, 8.4vw, 114px)', lineHeight: 0.9 }}>
             כל המוצרים
           </h1>
-          <p className="text-xl max-w-2xl leading-relaxed font-light" style={{ color: t.textSub }}>
-            בחרו מוצר, התאימו אישית וקבלו פריט שנוצר עבורכם בדיוק מיקרוסקופי.
+          <p className="m-0 mt-4 text-[18px] text-on-blue-2 max-w-[48ch]">
+            בוחרים פריט, כותבים מה לחרוט ורואים את זה על המוצר. שרטוט לאישור לפני כל חריטה.
           </p>
         </div>
       </section>
 
       {/* Category filter */}
-      <div 
-        className="sticky top-[52px] z-40 px-6 md:px-8 py-3 border-b backdrop-blur-sm transition-colors duration-300" 
-        style={{ background: t.navBg, borderColor: t.border }}
-      >
-        <div className="max-w-7xl mx-auto flex gap-2 overflow-x-auto scrollbar-none pb-0.5">
+      <div className="sticky top-[68px] z-30 bg-paper/95 backdrop-blur-sm">
+        <div className="wrap py-3 flex gap-2 overflow-x-auto" role="toolbar" aria-label="סינון לפי קטגוריה">
           {categories.map(cat => {
-            const active = activeCategory === cat;
+            const active = activeCategory === cat
             return (
               <button
                 key={cat}
+                type="button"
                 onClick={() => setActiveCategory(cat)}
-                className="px-5 py-2 rounded-full text-sm font-label font-semibold whitespace-nowrap transition-all duration-300"
-                style={{
-                  background: active ? t.accent : t.bgCard,
-                  color: active ? t.accentText : t.textSub,
-                  border: `1.5px solid ${active ? t.accent : t.border}`,
-                  boxShadow: active ? `0 4px 12px ${t.accent}25` : 'none',
-                }}
+                aria-pressed={active}
+                className="btn btn-sm shrink-0"
+                style={active
+                  ? { background: 'var(--blue)', color: '#fff' }
+                  : { background: 'var(--sheet)', color: 'var(--ink)', boxShadow: 'inset 0 0 0 2.5px var(--ink)' }}
               >
                 {cat === 'all' ? 'הכל' : CATEGORY_LABELS[cat] || cat}
-                <span className="mr-1.5 opacity-60 text-xs">
-                  ({cat === 'all' ? products.length : products.filter(p => p.category === cat).length})
-                </span>
+                <span className="tabular opacity-60 text-[13px]">{count(cat)}</span>
               </button>
             )
           })}
         </div>
       </div>
 
-      {/* Grid */}
-      <section className="py-12 px-6 md:px-8" style={{ background: t.bg }}>
-        <div className="max-w-7xl mx-auto">
-          {loading ? (
-            <div>
-              <p className="text-center text-sm mb-8 animate-pulse" style={{ color: t.textMuted }}>טוען מוצרים...</p>
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 animate-pulse">
-                {[...Array(8)].map((_, i) => (
-                  <div key={i} className="rounded-xl overflow-hidden border" style={{ background: t.bgCard, borderColor: t.border }}>
-                    <div className="aspect-[4/3]" style={{ background: t.bgAlt }} />
-                    <div className="p-5 space-y-2">
-                      <div className="h-4 w-3/4" style={{ background: t.bgAlt }} />
-                      <div className="h-3 w-full" style={{ background: t.bgAlt }} />
-                    </div>
-                  </div>
-                ))}
+      <section className="wrap py-10 md:py-14">
+        {status === 'ready' && !products.some(p => p.image_url) && (
+          <p className="m-0 mb-8 text-[15px] text-ink-3 max-w-[70ch]">
+            עוד אין לנו צילומים, אז כל מוצר מצויר עם {visitorName ? <><strong className="text-ink">״{visitorName}״</strong> עליו</> : 'הכיתוב שלכם עליו'}.
+            {!visitorName && <> אפשר לכתוב מה לחרוט <Link to="/" className="link-u">בעמוד הבית</Link>.</>}
+          </p>
+        )}
+
+        {status === 'loading' && (
+          <div className="grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3" role="status" aria-label="טוענים מוצרים">
+            {[...Array(6)].map((_, i) => (
+              <div key={i}>
+                <div className="aspect-[5/4] rounded-[22px] bg-paper-2 animate-pulse" />
+                <div className="h-5 w-2/3 mt-5 rounded bg-paper-2 animate-pulse" />
+                <div className="h-4 w-1/3 mt-3 rounded bg-paper-2 animate-pulse" />
               </div>
+            ))}
+          </div>
+        )}
+
+        {status === 'error' && (
+          <div className="sheet text-center px-6 py-16">
+            <p className="font-display text-[38px] m-0">לא הצלחנו לטעון את המוצרים</p>
+            <p className="m-0 mt-2 text-ink-2">בדרך כלל זה עובר אחרי כמה שניות.</p>
+            <div className="flex flex-wrap justify-center gap-3 mt-6">
+              <button type="button" onClick={load} className="btn btn-pink"><Icon name="refresh" size={18} /> לנסות שוב</button>
+              <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="btn btn-line"><Icon name="whatsapp" size={18} /> לשאול אותנו</a>
             </div>
-          ) : error ? (
-            <div className="text-center py-20 border rounded-xl" style={{ borderColor: t.border }}>
-              <span className="material-symbols-outlined text-5xl block mb-4" style={{ color: t.textMuted }}>wifi_off</span>
-              <p className="font-headline font-bold text-xl mb-2" style={{ color: t.text }}>לא הצלחנו לטעון את המוצרים</p>
-              <p className="text-sm mb-6" style={{ color: t.textMuted }}>נסו שוב בעוד רגע</p>
-              <button 
-                onClick={load} 
-                className="px-6 py-2.5 rounded-lg text-sm font-bold transition-all duration-200"
-                style={{ background: t.accent, color: t.accentText }}
-              >
-                נסה שוב
-              </button>
-            </div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-20 border rounded-xl" style={{ color: t.textMuted, borderColor: t.border }}>
-              <span className="material-symbols-outlined text-5xl block mb-3">inbox</span>
-              לא נמצאו מוצרים בקטגוריה זו
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {filtered.map(p => (
-                <ProductCard key={p.id} product={p} />
-              ))}
-            </div>
-          )}
-        </div>
+          </div>
+        )}
+
+        {status === 'ready' && filtered.length === 0 && (
+          <div className="sheet text-center px-6 py-16">
+            <p className="font-display text-[38px] m-0">אין כרגע מוצרים בקטגוריה הזאת</p>
+            <button type="button" onClick={() => setActiveCategory('all')} className="btn btn-line mt-6">להציג הכל</button>
+          </div>
+        )}
+
+        {status === 'ready' && filtered.length > 0 && (
+          <ul className="list-none m-0 p-0 grid gap-x-6 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((p, i) => <li key={p.id}><ProductTile product={p} tilt={[-4, 3, -2, 5, -3, 2][i % 6]} /></li>)}
+          </ul>
+        )}
       </section>
     </div>
   )
 }
 
-function ProductCard({ product }) {
-  const src = imgSrc(product)
-  const { theme: t } = useTheme()
-
+function ProductTile({ product, tilt = 0 }) {
   return (
-    <Link
-      to={`/products/${product.id}`}
-      className="group rounded-2xl overflow-hidden transition-all duration-300 flex flex-col shadow-sm"
-      style={{
-        background: t.bgCard,
-        boxShadow: '0 4px 20px rgba(0, 0, 0, 0.02)',
-      }}
-      onMouseEnter={e => {
-        e.currentTarget.style.boxShadow = t.shadow;
-        e.currentTarget.style.transform = 'translateY(-4px)';
-      }}
-      onMouseLeave={e => {
-        e.currentTarget.style.boxShadow = '0 4px 20px rgba(0, 0, 0, 0.02)';
-        e.currentTarget.style.transform = '';
-      }}
-    >
-      {/* Image */}
-      <div className="aspect-[4/3] overflow-hidden relative border-b" style={{ background: t.bgAlt, borderColor: t.border }}>
-        <img
-          src={src}
-          alt={product.name_he}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-750 ease-out"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-350" />
-        <div className="absolute bottom-3 right-3 left-3 flex justify-end opacity-0 group-hover:opacity-100 transition-all duration-300 translate-y-2 group-hover:translate-y-0">
-          <span 
-            className="text-xs font-bold px-4 py-2 rounded-lg shadow-md transition-transform active:scale-95"
-            style={{ background: t.accent, color: t.accentText }}
-          >
-            התחל לעצב ←
-          </span>
+    <Link to={`/products/${product.id}`} className="group block">
+      <ProductVisual product={product} className="aspect-[5/4]" tilt={tilt} zoom />
+      <div className="mt-2 flex items-baseline justify-between gap-4">
+        <div className="min-w-0">
+          <h2 className="m-0 text-[19px] font-bold leading-snug"><span className="group-hover:hl">{product.name_he}</span></h2>
+          <p className="m-0 mt-1 text-[14.5px] text-ink-3">
+            {[materialLabel(product.materials), CATEGORY_LABELS[product.category]].filter(Boolean).join(' · ')}
+          </p>
         </div>
+        <p className="m-0 font-display text-[40px] leading-none tabular text-blue shrink-0">{formatPrice(product.price)}</p>
       </div>
-
-      {/* Info */}
-      <div className="p-5 flex-1 flex flex-col text-right">
-        <div className="text-xs mb-1.5 font-label uppercase tracking-wider" style={{ color: t.textMuted }}>
-          {CATEGORY_LABELS[product.category] || product.category}
-        </div>
-        <h3 
-          className="font-headline font-bold text-lg leading-snug mb-2 transition-colors"
-          style={{ color: t.text }}
-          onMouseEnter={e => e.currentTarget.style.color = t.accent}
-          onMouseLeave={e => e.currentTarget.style.color = t.text}
-        >
-          {product.name_he}
-        </h3>
-        <p className="text-sm leading-relaxed flex-1 line-clamp-2 font-light" style={{ color: t.textSub }}>
-          {product.description_he}
-        </p>
-        <div className="mt-4 flex items-center justify-between border-t pt-4" style={{ borderColor: t.border }}>
-          <span className="font-headline font-black text-xl flex flex-col items-start leading-none" style={{ color: t.accent }}>
-            <span>₪{product.price}</span>
-            <span className="text-[10px] font-normal mt-0.5" style={{ color: t.textMuted }}>לפני משלוח</span>
-          </span>
-          <span className="material-symbols-outlined transition-colors group-hover:translate-x-[-4px]" style={{ color: t.textMuted }}>arrow_back</span>
-        </div>
-      </div>
+      <p className="m-0 mt-3 inline-flex items-center gap-1.5 text-[15px] font-medium text-blue">
+        לעצב ולהזמין
+        <Icon name="arrowBack" size={16} className="transition-transform duration-300 group-hover:-translate-x-1" />
+      </p>
     </Link>
   )
 }

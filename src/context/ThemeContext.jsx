@@ -1,86 +1,56 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 
-export const THEMES = {
-  warm: {
-    id: 'warm', label: 'חמים',
-    bg: '#fcfbfa',
-    bgAlt: '#f6f3ee',
-    bgCard: '#ffffff',
-    bgCardHover: '#faf9f7',
-    text: '#201a16',
-    textSub: '#52463e',
-    textMuted: '#8a776c',
-    accent: '#0d3b66',
-    accentHover: '#07203b',
-    accentText: '#ffffff',
-    accentSubtle: 'rgba(13,59,102,0.06)',
-    border: 'rgba(13,59,102,0.09)',
-    borderStrong: 'rgba(13,59,102,0.2)',
-    navBg: 'rgba(252,251,250,0.96)',
-    shadow: '0 4px 24px rgba(32,26,22,0.05)',
-    heroTint: 'linear-gradient(to left, rgba(252,251,250,0) 5%, rgba(252,251,250,0.82) 48%, rgba(252,251,250,0.99) 70%)',
-  },
-  dark: {
-    id: 'dark', label: 'לילה',
-    bg: '#110f0e',
-    bgAlt: '#1a1715',
-    bgCard: '#211e1b',
-    bgCardHover: '#2a2622',
-    text: '#f7f4eb',
-    textSub: '#d4c9b8',
-    textMuted: '#8c7f6f',
-    accent: '#cfa052',
-    accentHover: '#b88c3f',
-    accentText: '#110f0e',
-    accentSubtle: 'rgba(207,160,82,0.1)',
-    border: 'rgba(207,160,82,0.15)',
-    borderStrong: 'rgba(207,160,82,0.3)',
-    navBg: 'rgba(17,15,14,0.97)',
-    shadow: '0 4px 32px rgba(0,0,0,0.4)',
-    heroTint: 'linear-gradient(to left, rgba(17,15,14,0) 5%, rgba(17,15,14,0.8) 46%, rgba(17,15,14,0.98) 70%)',
-  },
-  minimal: {
-    id: 'minimal', label: 'נקי',
-    bg: '#fafafa',
-    bgAlt: '#f2f2f2',
-    bgCard: '#ffffff',
-    bgCardHover: '#f5f5f5',
-    text: '#111111',
-    textSub: '#555555',
-    textMuted: '#888888',
-    accent: '#000000',
-    accentHover: '#222222',
-    accentText: '#ffffff',
-    accentSubtle: 'rgba(0,0,0,0.04)',
-    border: 'rgba(0,0,0,0.08)',
-    borderStrong: 'rgba(0,0,0,0.2)',
-    navBg: 'rgba(250,250,250,0.96)',
-    shadow: '0 4px 20px rgba(0,0,0,0.03)',
-    heroTint: 'linear-gradient(to left, rgba(250,250,250,0) 5%, rgba(250,250,250,0.88) 48%, rgba(250,250,250,0.99) 70%)',
-  },
+// One palette for the whole site: a risograph zine. Paper stock and three
+// flat inks: pink for action, blue for structure, yellow for highlight.
+export const THEME = {
+  bg: '#f3f3ef',           // paper stock
+  bgAlt: '#e8e8e2',
+  bgCard: '#ffffff',       // white sheet
+  text: '#1d1d1f',
+  textSub: '#45464b',
+  textMuted: '#64656b',
+  blue: '#0078bf',
+  pink: '#ff48b0',
+  yellow: '#ffe800',
+  danger: '#c4122f',
+  success: '#0f7a3d',
+  border: 'rgba(29,29,31,0.14)',
+  borderStrong: 'rgba(29,29,31,0.5)',
+  // Legacy aliases still read by the customizer preview engine.
+  accent: '#0078bf',
+  accentHover: '#005a91',
+  accentText: '#ffffff',
+  accentSubtle: 'rgba(0,120,191,0.08)',
 };
 
 const ThemeContext = createContext();
 
+const NAME_KEY = 'hotam_name';
+
+function readName() {
+  try { return localStorage.getItem(NAME_KEY) || '' } catch { return '' }
+}
+
 export function ThemeProvider({ children }) {
-  const [themeId, setThemeId] = useState(() => {
+  // The visitor's name, typed once on the home door sign, follows them across the site.
+  const [visitorName, setVisitorNameState] = useState(readName);
+
+  const setVisitorName = (v) => {
+    setVisitorNameState(v);
     try {
-      return localStorage.getItem('hotam_theme') || 'warm';
-    } catch {
-      return 'warm';
-    }
-  });
+      if (v) localStorage.setItem(NAME_KEY, v);
+      else localStorage.removeItem(NAME_KEY);
+    } catch { /* storage unavailable */ }
+  };
 
   useEffect(() => {
-    try {
-      localStorage.setItem('hotam_theme', themeId);
-    } catch {}
-  }, [themeId]);
-
-  const theme = THEMES[themeId] || THEMES.warm;
+    const onStorage = (e) => { if (e.key === NAME_KEY) setVisitorNameState(e.newValue || '') };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   return (
-    <ThemeContext.Provider value={{ themeId, setThemeId, theme }}>
+    <ThemeContext.Provider value={{ theme: THEME, visitorName, setVisitorName }}>
       {children}
     </ThemeContext.Provider>
   );

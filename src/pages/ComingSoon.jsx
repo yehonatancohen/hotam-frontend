@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
+import Icon, { WA_URL } from '../components/Icon'
 
 const API = import.meta.env.VITE_API_URL
 
@@ -20,94 +21,51 @@ export default function ComingSoon() {
       setSubmitted(true)
     } catch (err) {
       console.error(err)
-      setError('אירעה שגיאה ברישום. אנא נסה שנית.')
+      setError('לא הצלחנו לרשום את המייל. נסו שוב עוד רגע.')
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <div className="min-h-[85vh] flex items-center justify-center px-6 py-20 bg-surface">
-      <div className="max-w-lg w-full text-center">
-
-        {/* Icon */}
-        <div className="w-20 h-20 mx-auto mb-8 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center">
-          <span className="material-symbols-outlined text-4xl text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
-            inventory_2
-          </span>
-        </div>
-
-        {/* Heading */}
-        <h1 className="font-headline font-black text-4xl md:text-5xl text-on-surface tracking-tight mb-4">
-          המלאי אזל — <span className="text-primary">בקרוב נחזור</span>
+    <div className="wrap py-16 md:py-24">
+      <div className="slab max-w-3xl mx-auto text-center" style={{ padding: 'clamp(48px, 7vw, 88px) clamp(24px, 5vw, 64px)' }}>
+        <h1 className="font-display m-0 text-white mx-auto max-w-[14ch]" style={{ fontSize: 'clamp(57px, 8.1vw, 105px)', lineHeight: 0.9 }}>
+          הלייזר מתחמם.
         </h1>
-
-        <p className="text-on-surface-variant text-lg leading-relaxed mb-10 font-light">
-          אנחנו עובדים קשה כדי לחדש את המלאי ולהביא לכם עוד מוצרים מדהימים.
-          השאירו אימייל ונודיע לכם ראשונים כשהמוצרים יחזרו לאוויר.
+        <p className="m-0 mt-5 mx-auto text-[18px] text-on-blue-2 max-w-[42ch]">
+          החלק הזה של האתר עוד לא מוכן. השאירו מייל ונעדכן כשהוא עולה.
         </p>
 
-        {/* Email form */}
         {submitted ? (
-          <div className="flex flex-col items-center gap-4 py-8 px-6 bg-primary/5 border border-primary/20 rounded-2xl">
-            <span className="material-symbols-outlined text-5xl text-primary" style={{ fontVariationSettings: "'FILL' 1" }}>
-              check_circle
-            </span>
-            <p className="font-headline font-bold text-xl text-on-surface">נרשמת בהצלחה!</p>
-            <p className="text-on-surface-variant text-sm">נשלח לך עדכון כשהמוצרים יחזרו. תודה שאתה איתנו.</p>
-          </div>
+          <p className="m-0 mt-9 inline-flex items-center gap-2 text-white text-[18px] font-medium" role="status">
+            <Icon name="check" size={20} /> רשמנו. נעדכן אתכם.
+          </p>
         ) : (
-          <div className="space-y-3">
-            <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 w-full" dir="rtl">
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="כתובת האימייל שלך"
-                required
-                className="flex-1 bg-surface-container-lowest border-2 border-outline-variant focus:border-primary focus:outline-none rounded-xl px-5 py-3.5 text-on-surface text-base placeholder:text-on-surface-variant/40 transition-colors"
-              />
-              <button
-                type="submit"
-                disabled={loading}
-                className="btn-primary px-8 py-3.5 text-base whitespace-nowrap disabled:opacity-60 disabled:cursor-not-allowed"
-              >
-                {loading ? (
-                  <span className="flex items-center gap-2 justify-center">
-                    <span className="animate-spin material-symbols-outlined text-base">autorenew</span>
-                    שולח...
-                  </span>
-                ) : 'הודיעו לי'}
-              </button>
-            </form>
-            {error && <p className="text-[#DC2626] text-xs font-semibold mt-1">{error}</p>}
-          </div>
+          <form onSubmit={handleSubmit} className="mt-9 mx-auto max-w-md flex flex-col sm:flex-row gap-3">
+            <label htmlFor="cs-email" className="sr-only">מייל</label>
+            <input
+              id="cs-email"
+              type="email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              placeholder="המייל שלכם"
+              required
+              dir="ltr"
+              className="field flex-1"
+              style={{ textAlign: 'right', borderColor: 'transparent' }}
+            />
+            <button type="submit" disabled={loading} className="btn btn-paper">
+              {loading ? <><Icon name="spinner" size={18} /> שולחים…</> : 'לעדכן אותי'}
+            </button>
+          </form>
         )}
+        {error && <p className="m-0 mt-3 text-white text-[14px]" role="alert">{error}</p>}
+      </div>
 
-        {/* Divider */}
-        <div className="flex items-center gap-4 my-10">
-          <div className="flex-1 h-px bg-outline-variant/30" />
-          <span className="text-on-surface-variant text-xs font-label uppercase tracking-widest">או</span>
-          <div className="flex-1 h-px bg-outline-variant/30" />
-        </div>
-
-        {/* Back links */}
-        <div className="flex flex-col sm:flex-row gap-3 justify-center">
-          <Link
-            to="/products"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-surface-container text-on-surface font-headline font-bold text-sm hover:bg-surface-container-high transition-all"
-          >
-            <span className="material-symbols-outlined text-base">arrow_forward</span>
-            ראו את המוצרים
-          </Link>
-          <Link
-            to="/"
-            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-surface-container text-on-surface font-headline font-bold text-sm hover:bg-surface-container-high transition-all"
-          >
-            <span className="material-symbols-outlined text-base">home</span>
-            דף הבית
-          </Link>
-        </div>
+      <div className="flex flex-wrap justify-center gap-3 mt-10">
+        <Link to="/products" className="btn btn-line">למוצרים שכבר אפשר להזמין</Link>
+        <a href={WA_URL} target="_blank" rel="noopener noreferrer" className="btn btn-line"><Icon name="whatsapp" size={18} /> וואטסאפ</a>
       </div>
     </div>
   )
